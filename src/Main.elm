@@ -75,20 +75,26 @@ init _ =
 
 
 type Msg
-    = Roll
-    | Stop RollResult
+    = PlayerBets Money
+    | DieResolves RollResult
+    | DetermineWin GameResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Roll ->
+        PlayerBets _ ->
             ( model
-            , Random.generate Stop dieRoller
+            , Random.generate DieResolves dieRoller
             )
 
-        Stop rollResults ->
+        DieResolves rollResults ->
             ( rollResults
+            , Cmd.none
+            )
+
+        DetermineWin _ ->
+            ( model
             , Cmd.none
             )
 
@@ -116,7 +122,7 @@ dieGenerator =
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick Roll ] [ text "Spin" ]
+        [ button [ onClick (PlayerBets 1000) ] [ text "Spin" ]
         , viewRow model
         ]
 
