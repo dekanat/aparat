@@ -1,11 +1,4 @@
--- Press a button to draw a random card.
---
--- Dependencies:
---   elm install elm/random
---
-
-
-module Main exposing (Board, Card(..), Model, Msg(..), Row, cardGenerator, init, main, manyCardGenerator, subscriptions, update, view, viewCard, viewRow)
+module Main exposing (..)
 
 import Browser
 import Html exposing (..)
@@ -22,7 +15,7 @@ main =
     Browser.element
         { init = init
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = \_ -> Sub.none
         , view = view
         }
 
@@ -31,39 +24,50 @@ main =
 -- MODEL
 
 
-type alias Row =
-    List Card
+type alias Money =
+    Int
 
 
-type alias Board =
-    List Row
+type DieFace
+    = Yek
+    | Du
+    | Se
+    | Jhar
+    | Panj
+    | Shesh
+
+
+type alias RollResult =
+    ( DieFace, DieFace )
+
+
+type GameResult
+    = MarkWins Int
+    | ZaraWins Int
+
+
+stake : Money -> RollResult -> GameResult
+stake wager ( a, b ) =
+    if a == b then
+        MarkWins (wager * 6)
+
+    else
+        ZaraWins wager
+
+
+type alias Accounts =
+    { mark : Money, zara : Money }
 
 
 type alias Model =
-    List Card
+    RollResult
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( [ Queen, Queen, Queen ]
+    ( ( Panj, Se )
     , Cmd.none
     )
-
-
-type Card
-    = Ace
-    | Two
-    | Three
-    | Four
-    | Five
-    | Six
-    | Seven
-    | Eight
-    | Nine
-    | Ten
-    | Jack
-    | Queen
-    | King
 
 
 
@@ -71,54 +75,38 @@ type Card
 
 
 type Msg
-    = Spin
-    | Stop (List Card)
+    = Roll
+    | Stop RollResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Spin ->
+        Roll ->
             ( model
-            , Random.generate Stop manyCardGenerator
+            , Random.generate Stop dieRoller
             )
 
-        Stop cards ->
-            ( cards
+        Stop rollResults ->
+            ( rollResults
             , Cmd.none
             )
 
 
-manyCardGenerator : Random.Generator (List Card)
-manyCardGenerator =
-    Random.list 3 cardGenerator
+dieRoller : Random.Generator RollResult
+dieRoller =
+    Random.pair dieGenerator dieGenerator
 
 
-cardGenerator : Random.Generator Card
-cardGenerator =
-    Random.uniform Ace
-        [ Two
-        , Three
-        , Four
-        , Five
-        , Six
-        , Seven
-        , Eight
-        , Nine
-        , Ten
-        , Jack
-        , Queen
-        , King
+dieGenerator : Random.Generator DieFace
+dieGenerator =
+    Random.uniform Yek
+        [ Du
+        , Se
+        , Jhar
+        , Panj
+        , Shesh
         ]
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
 
 
 
@@ -128,60 +116,42 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick Spin ] [ text "Spin" ]
+        [ button [ onClick Roll ] [ text "Spin" ]
         , viewRow model
         ]
 
 
-viewRow : List Card -> Html Msg
-viewRow cards =
+viewRow : RollResult -> Html Msg
+viewRow rollResult =
     let
-        viewEach : Card -> Html Msg
-        viewEach card =
-            span [ style "font-size" "12em" ] [ text (viewCard card) ]
+        viewEach : DieFace -> Html Msg
+        viewEach dieFace =
+            span [ style "font-size" "12em" ] [ text (viewDieFace dieFace) ]
+
+        ( l, r ) =
+            rollResult
     in
     div []
-        (List.map viewEach cards)
+        (List.map viewEach [ l, r ])
 
 
-viewCard : Card -> String
-viewCard card =
-    case card of
-        Ace ->
-            "🂡"
+viewDieFace : DieFace -> String
+viewDieFace dieFace =
+    case dieFace of
+        Yek ->
+            "⚀"
 
-        Two ->
-            "🂢"
+        Du ->
+            "⚁"
 
-        Three ->
-            "🂣"
+        Se ->
+            "⚂"
 
-        Four ->
-            "🂤"
+        Jhar ->
+            "⚃"
 
-        Five ->
-            "🂥"
+        Panj ->
+            "⚄"
 
-        Six ->
-            "🂦"
-
-        Seven ->
-            "🂧"
-
-        Eight ->
-            "🂨"
-
-        Nine ->
-            "🂩"
-
-        Ten ->
-            "🂪"
-
-        Jack ->
-            "🂫"
-
-        Queen ->
-            "🂭"
-
-        King ->
-            "🂮"
+        Shesh ->
+            "⚅"

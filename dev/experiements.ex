@@ -24,7 +24,7 @@ defmodule SeaC.MiscTest do
 
     arrange_wins = fn balance, {player, casino} ->
       cond do
-        balance < 0 -> {player, casino + (-balance)}
+        balance < 0 -> {player, casino + -balance}
         balance > 0 -> {player + balance, casino}
         true -> {player, casino}
       end
@@ -45,12 +45,11 @@ defmodule SeaC.MiscTest do
       simulate_many.(50)
       |> List.foldl({0, 0}, arrange_wins)
 
-    { p, c } = pnduk
+    {p, c} = pnduk
 
     IO.inspect(pnduk)
     IO.inspect(p / (p + c))
     IO.inspect(c / (p + c))
-
 
     assert p / (p + c) < c / (p + c)
   end
