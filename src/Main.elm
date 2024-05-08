@@ -2,14 +2,11 @@ module Main exposing (..)
 
 import Browser
 import Debug exposing (toString)
-import Element exposing (Color, alignLeft, centerX, layout)
-import Element.Background
+import Element
 import Element.Border
 import Element.Font
 import Element.Input
-import Html exposing (..)
-import Html.Attributes exposing (style)
-import Html.Events exposing (..)
+import Html exposing (Html)
 import Random
 
 
@@ -210,9 +207,9 @@ displayBenzinoScene { balance, gameState } =
                 }
     in
     Element.column []
-        [ Element.row
+        [ Element.el
             [ Element.alignRight ]
-            [ balanceDisplay ]
+            balanceDisplay
         , rollResultsDisplay
         , rollTrigger
         ]
@@ -220,7 +217,7 @@ displayBenzinoScene { balance, gameState } =
 
 view : Model -> Html Msg
 view model =
-    Element.layout [ Element.padding 50, centerX ]
+    Element.layout [ Element.padding 50 ]
         (displayBenzinoScene model)
 
 
