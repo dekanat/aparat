@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Debug exposing (toString)
-import Element exposing (Color, alignLeft, layout)
+import Element exposing (Color, alignLeft, centerX, layout)
 import Element.Background
 import Element.Border
 import Element.Font
@@ -179,16 +179,11 @@ dieGenerator =
 -- VIEW
 
 
-view2 : Model -> Html Msg
-view2 { balance, gameState } =
+displayBenzinoScene : { a | balance : Money, gameState : GameState } -> Element.Element Msg
+displayBenzinoScene { balance, gameState } =
     let
         balanceDisplay =
             Element.text ("Balance: " ++ toString balance)
-
-        contextInfo =
-            Element.row [ Element.alignRight ]
-                [ balanceDisplay
-                ]
 
         rollResultsDisplay =
             case gameState of
@@ -199,77 +194,38 @@ view2 { balance, gameState } =
                     Element.row
                         [ Element.Font.size 200
                         ]
-                        [ Element.text (viewDieFace rolledA)
-                        , Element.text (viewDieFace rolledB)
+                        [ Element.text (pictogramFor rolledA)
+                        , Element.text (pictogramFor rolledB)
                         ]
 
-        controlPanel =
-            Element.row
+        rollTrigger =
+            Element.Input.button
                 [ Element.centerX
                 , Element.Border.width 2
                 , Element.Border.rounded 2
                 , Element.padding 8
                 ]
-                [ rollTrigger ]
-
-        rollTrigger =
-            Element.Input.button []
                 { label = Element.text "Roll for 1000"
                 , onPress = Just (Bet 1000)
                 }
     in
-    layout []
-        (Element.column []
-            [ contextInfo
-            , rollResultsDisplay
-            , controlPanel
-            ]
-        )
-
-
-view1 : Model -> Html Msg
-view1 model =
-    div []
-        [ button [ onClick (Bet 1000) ] [ text "Spin" ]
-        , case model.gameState of
-            Staked _ ->
-                text "Spinning..."
-
-            Resolved rollResult _ ->
-                div []
-                    [ viewRow rollResult
-                    ]
-        , div []
-            [ text ("Mark: " ++ String.fromInt model.balance)
-            ]
+    Element.column []
+        [ Element.row
+            [ Element.alignRight ]
+            [ balanceDisplay ]
+        , rollResultsDisplay
+        , rollTrigger
         ]
 
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ view1 model
-        , hr [] []
-        , view2 model
-        ]
+    Element.layout [ Element.padding 50, centerX ]
+        (displayBenzinoScene model)
 
 
-viewRow : RollResult -> Html Msg
-viewRow rollResult =
-    let
-        viewEach : DieFace -> Html Msg
-        viewEach dieFace =
-            span [ style "font-size" "12em" ] [ text (viewDieFace dieFace) ]
-
-        ( l, r ) =
-            rollResult
-    in
-    div []
-        (List.map viewEach [ l, r ])
-
-
-viewDieFace : DieFace -> String
-viewDieFace dieFace =
+pictogramFor : DieFace -> String
+pictogramFor dieFace =
     case dieFace of
         Yek ->
             "⚀"
