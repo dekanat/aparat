@@ -59,44 +59,94 @@ type alias Accounts =
     { mark : Money, zara : Money }
 
 
+type GameState
+    = Staked Money
+    | Resolved RollResult GameResult
+
+
 type alias Model =
-    RollResult
+    { balance : Money
+    , gameState : GameState
+    }
+
+
+type Msg
+    = Bet Money
+    | GameResolves RollResult
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg { balance, gameState } =
+    case msg of
+        Bet amount ->
+            let
+                newModel =
+                    { balance = balance - amount
+                    , gameState = Staked amount
+                    }
+            in
+            ( newModel, Random.generate GameResolves dieRoller )
+
+        GameResolves rollResults ->
+            let
+                isWinningCombination =
+                    case rollResults of
+                        ( Yek, Yek ) ->
+                            True
+
+                        ( Du, Du ) ->
+                            True
+
+                        ( Se, Se ) ->
+                            True
+
+                        ( Jhar, Jhar ) ->
+                            True
+
+                        ( Panj, Panj ) ->
+                            True
+
+                        ( Shesh, Shesh ) ->
+                            True
+
+                        _ ->
+                            False
+
+                wager =
+                    case gameState of
+                        Staked amount ->
+                            amount
+
+                        _ ->
+                            0
+
+                gameResult =
+                    if isWinningCombination then
+                        MarkWins (wager * 6)
+
+                    else
+                        ZaraWins wager
+
+                newModel =
+                    case gameResult of
+                        MarkWins amount ->
+                            { balance = balance + amount, gameState = Resolved rollResults gameResult }
+
+                        ZaraWins amount ->
+                            { balance = balance - amount, gameState = Resolved rollResults gameResult }
+            in
+            ( newModel, Cmd.none )
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( ( Panj, Se )
+    ( { balance = 3000, gameState = Resolved ( Yek, Du ) (MarkWins 0) }
     , Cmd.none
     )
 
 
 
--- UPDATE
-
-
-type Msg
-    = PlayerBets Money
-    | DieResolves RollResult
-    | DetermineWin GameResult
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        PlayerBets _ ->
-            ( model
-            , Random.generate DieResolves dieRoller
-            )
-
-        DieResolves rollResults ->
-            ( rollResults
-            , Cmd.none
-            )
-
-        DetermineWin _ ->
-            ( model
-            , Cmd.none
-            )
+-- UPDAT
 
 
 dieRoller : Random.Generator RollResult
@@ -122,8 +172,18 @@ dieGenerator =
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick (PlayerBets 1000) ] [ text "Spin" ]
-        , viewRow model
+        [ button [ onClick (Bet 1000) ] [ text "Spin" ]
+        , case model.gameState of
+            Staked _ ->
+                text "Spinning..."
+
+            Resolved rollResult _ ->
+                div []
+                    [ viewRow rollResult
+                    ]
+        , div []
+            [ text ("Mark: " ++ String.fromInt model.balance)
+            ]
         ]
 
 
