@@ -1,9 +1,12 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (..)
-import Html.Attributes exposing (style)
-import Html.Events exposing (..)
+import Debug exposing (toString)
+import Element
+import Element.Border
+import Element.Font
+import Element.Input
+import Html exposing (Html)
 import Random
 
 
@@ -130,10 +133,14 @@ update msg { balance, gameState } =
                 newModel =
                     case gameResult of
                         MarkWins amount ->
-                            { balance = balance + amount, gameState = Resolved rollResults gameResult }
+                            { balance = balance + amount
+                            , gameState = Resolved rollResults gameResult
+                            }
 
                         ZaraWins amount ->
-                            { balance = balance - amount, gameState = Resolved rollResults gameResult }
+                            { balance = balance - amount
+                            , gameState = Resolved rollResults gameResult
+                            }
             in
             ( newModel, Cmd.none )
 
@@ -169,40 +176,53 @@ dieGenerator =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
-    div []
-        [ button [ onClick (Bet 1000) ] [ text "Spin" ]
-        , case model.gameState of
-            Staked _ ->
-                text "Spinning..."
+displayBenzinoScene : { a | balance : Money, gameState : GameState } -> Element.Element Msg
+displayBenzinoScene { balance, gameState } =
+    let
+        balanceDisplay =
+            Element.text ("Balance: " ++ toString balance)
 
-            Resolved rollResult _ ->
-                div []
-                    [ viewRow rollResult
-                    ]
-        , div []
-            [ text ("Mark: " ++ String.fromInt model.balance)
-            ]
+        rollResultsDisplay =
+            case gameState of
+                Staked _ ->
+                    Element.text "Rolling..."
+
+                Resolved ( rolledA, rolledB ) _ ->
+                    Element.row
+                        [ Element.Font.size 200
+                        ]
+                        [ Element.text (pictogramFor rolledA)
+                        , Element.text (pictogramFor rolledB)
+                        ]
+
+        rollTrigger =
+            Element.Input.button
+                [ Element.centerX
+                , Element.Border.width 2
+                , Element.Border.rounded 2
+                , Element.padding 8
+                ]
+                { label = Element.text "Roll for 1000"
+                , onPress = Just (Bet 1000)
+                }
+    in
+    Element.column []
+        [ Element.el
+            [ Element.alignRight ]
+            balanceDisplay
+        , rollResultsDisplay
+        , rollTrigger
         ]
 
 
-viewRow : RollResult -> Html Msg
-viewRow rollResult =
-    let
-        viewEach : DieFace -> Html Msg
-        viewEach dieFace =
-            span [ style "font-size" "12em" ] [ text (viewDieFace dieFace) ]
-
-        ( l, r ) =
-            rollResult
-    in
-    div []
-        (List.map viewEach [ l, r ])
+view : Model -> Html Msg
+view model =
+    Element.layout [ Element.padding 50 ]
+        (displayBenzinoScene model)
 
 
-viewDieFace : DieFace -> String
-viewDieFace dieFace =
+pictogramFor : DieFace -> String
+pictogramFor dieFace =
     case dieFace of
         Yek ->
             "⚀"
