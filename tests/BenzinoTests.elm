@@ -1,7 +1,7 @@
 module BenzinoTests exposing (..)
 
 import Expect exposing (..)
-import Main exposing (Accounts, DieFace(..), GameResult(..), GameState(..), Model, Msg(..), RollResult, stake, update)
+import Main exposing (Accounts, DieFace(..), GameResult(..), GameState(..), Model, Msg(..), RollResult, evaluateGameResult, update)
 import Random
 import Test exposing (..)
 import Time exposing (Weekday(..))
@@ -99,7 +99,7 @@ juxtZarTests1 =
     describe "Player Wins"
         [ test "When both dice are the same" <|
             \() ->
-                stake 1000 ( Yek, Yek )
+                evaluateGameResult 1000 ( Yek, Yek )
                     |> Expect.equal (MarkWins 6000)
         , test "Then Zara pays" <|
             \() ->
@@ -126,7 +126,7 @@ juxtZarTests1 =
                                 }
                 in
                 rollWinningCombination ()
-                    |> stake 1000
+                    |> evaluateGameResult 1000
                     |> settle accounts
                     |> Expect.equal { mark = 7000, zara = 44000 }
         ]

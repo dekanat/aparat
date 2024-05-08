@@ -49,8 +49,8 @@ type GameResult
     | ZaraWins Int
 
 
-stake : Money -> RollResult -> GameResult
-stake wager ( a, b ) =
+evaluateGameResult : Money -> RollResult -> GameResult
+evaluateGameResult wager ( a, b ) =
     if a == b then
         MarkWins (wager * 6)
 
@@ -92,45 +92,18 @@ update msg { balance, gameState } =
 
         GameResolves rollResults ->
             let
-                isWinningCombination =
-                    case rollResults of
-                        ( Yek, Yek ) ->
-                            True
-
-                        ( Du, Du ) ->
-                            True
-
-                        ( Se, Se ) ->
-                            True
-
-                        ( Jhar, Jhar ) ->
-                            True
-
-                        ( Panj, Panj ) ->
-                            True
-
-                        ( Shesh, Shesh ) ->
-                            True
-
-                        _ ->
-                            False
-
                 wager =
                     case gameState of
-                        Staked amount ->
-                            amount
+                        Staked bet ->
+                            bet
 
                         _ ->
                             0
 
                 gameResult =
-                    if isWinningCombination then
-                        MarkWins (wager * 6)
+                    evaluateGameResult wager rollResults
 
-                    else
-                        ZaraWins wager
-
-                newModel =
+                newState =
                     case gameResult of
                         MarkWins amount ->
                             { balance = balance + amount
@@ -142,7 +115,7 @@ update msg { balance, gameState } =
                             , gameState = Resolved rollResults gameResult
                             }
             in
-            ( newModel, Cmd.none )
+            ( newState, Cmd.none )
 
 
 init : () -> ( Model, Cmd Msg )
