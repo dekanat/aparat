@@ -24,20 +24,42 @@ updateTests =
                 update (Bet 1000) initialModel
                     |> Tuple.first
                     |> Expect.equal { balance = 2000, gameState = Staked 1000 }
-        , test "When the game resolves" <|
-            \() ->
-                let
-                    initialModel : Model
-                    initialModel =
-                        { balance = 2000, gameState = Staked 1000 }
+        , describe "When the game resolves"
+            [ test "And player wins" <|
+                \() ->
+                    let
+                        initialState : Model
+                        initialState =
+                            { balance = 2000, gameState = Staked 1000 }
 
-                    newGameState : GameState
-                    newGameState =
-                        Resolved ( Yek, Yek ) (MarkWins 6000)
-                in
-                update (GameResolves ( Yek, Yek )) initialModel
-                    |> Tuple.first
-                    |> Expect.equal { balance = 8000, gameState = newGameState }
+                        incomingCombination =
+                            ( Yek, Yek )
+
+                        expectedGameState : GameState
+                        expectedGameState =
+                            Resolved incomingCombination (MarkWins 6000)
+                    in
+                    update (GameResolves incomingCombination) initialState
+                        |> Tuple.first
+                        |> Expect.equal { balance = 8000, gameState = expectedGameState }
+            , test "And player loses" <|
+                \() ->
+                    let
+                        initialState : Model
+                        initialState =
+                            { balance = 2000, gameState = Staked 1000 }
+
+                        incomingCombination =
+                            ( Yek, Du )
+
+                        expectedGameState : GameState
+                        expectedGameState =
+                            Resolved incomingCombination (ZaraWins 1000)
+                    in
+                    update (GameResolves incomingCombination) initialState
+                        |> Tuple.first
+                        |> Expect.equal { balance = 2000, gameState = expectedGameState }
+            ]
         ]
 
 

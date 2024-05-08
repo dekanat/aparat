@@ -137,8 +137,8 @@ update msg { balance, gameState } =
                             , gameState = Resolved rollResults gameResult
                             }
 
-                        ZaraWins amount ->
-                            { balance = balance - amount
+                        ZaraWins _ ->
+                            { balance = balance
                             , gameState = Resolved rollResults gameResult
                             }
             in
