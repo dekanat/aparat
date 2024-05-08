@@ -2,7 +2,13 @@
 
 Ներկայացումներ հավանական երևույթների շուրջ, կիրառական ապարատների մասնակցությամբ։
 
-### Development
+### Local Development
+
+#### Setup
+
+```sh
+npx elm-tooling install
+```
 
 #### Testing
 
@@ -18,14 +24,6 @@ npx elm-test
 npx elm-test --watch
 ```
 
-#### Introducing changes
-
-Կոդը կարելի ա փոխել միանգամից հիմնական բռենչի վրա, բայց ընկերներով աշխատելու դեպքում կարա ցանկալի լինի Pull Request-ներով, որպես նայել քննարկելու հարմար[^1] վարիանտ։
-
-Ամեն դեպքում փոփոխությունները պետք ա լինեն կոնկրետ, ու հնարավորինս փոքր։ Ավելի մանրամասն commit-ների մասին՝ [տես հավելվածը](https://github.com/amotali/konvektion/blob/main/Commit%20Messages.md)։
-
-[^1]: Որպես հարմարություն, Pull Request-ների վրա միացրած ա [որակավորման ավտոմատիկա](/actions/workflows/audit.yml)՝ տեստերը, կոդի ձևաչափը, և նման բաներ ստուգելու համար։
-
 #### Running in browser
 
 Ընթացքում ծրագրի աշխատանքին հետևելու համար սեղմեք
@@ -35,6 +33,16 @@ npx elm-watch@beta hot
 ```
 
 ապա բացեք տրամադրված լինկը բրաուզերով
+
+### Contributing
+
+#### Introducing changes
+
+Կոդը կարելի ա փոխել միանգամից հիմնական բռենչի վրա, բայց ընկերներով աշխատելու դեպքում կարա ցանկալի լինի Pull Request-ներով, որպես նայել քննարկելու հարմար[^1] վարիանտ։
+
+Ամեն դեպքում փոփոխությունները պետք ա լինեն կոնկրետ, ու հնարավորինս փոքր։ Ավելի մանրամասն commit-ների մասին՝ [տես հավելվածը](https://github.com/amotali/konvektion/blob/main/Commit%20Messages.md)։
+
+[^1]: Որպես հարմարություն, Pull Request-ների վրա միացրած ա [որակավորման ավտոմատիկա](/actions/workflows/audit.yml)՝ տեստերը, կոդի ձևաչափը, և նման բաներ ստուգելու համար։
 
 #### Publishing online
 
@@ -46,7 +54,6 @@ npx elm-watch@beta hot
 1. Navigate to the [Publishing action tab](/actions/workflows/publishing.yml) in GitHub Actions
 2. Select the appropriate workflow and branch
 3. Click the "Run workflow" button (կոճակը)
- 
 
 ![image](https://user-images.githubusercontent.com/25614707/222993363-38a820ed-2e94-4bd1-b566-9ff312b3d270.png)
 
