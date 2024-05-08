@@ -74,21 +74,23 @@ type alias Model =
 
 
 type Msg
-    = Bet Money
+    = PlayerBets Money
     | GameResolves RollResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg { balance, gameState } =
     case msg of
-        Bet amount ->
-            let
-                newModel =
-                    { balance = balance - amount
-                    , gameState = Staked amount
-                    }
-            in
-            ( newModel, Random.generate GameResolves dieRoller )
+        PlayerBets amount ->
+            if amount > balance then
+                ( { balance = balance, gameState = gameState }, Cmd.none )
+
+            else
+                ( { balance = balance - amount
+                  , gameState = Staked amount
+                  }
+                , Random.generate GameResolves dieRoller
+                )
 
         GameResolves rollResults ->
             let
@@ -176,7 +178,7 @@ displayBenzinoScene { balance, gameState } =
                 , Element.padding 8
                 ]
                 { label = Element.text "Roll for 1000"
-                , onPress = Just (Bet 1000)
+                , onPress = Just (PlayerBets 1000)
                 }
     in
     Element.column []

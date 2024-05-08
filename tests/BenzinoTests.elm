@@ -9,17 +9,30 @@ import Time exposing (Weekday(..))
 updateTests : Test
 updateTests =
     describe "update"
-        [ test "When a bet is placed" <|
-            \() ->
-                let
-                    initialGameState : GameState
-                    initialGameState =
-                        Resolved ( Yek, Du ) (MarkWins 0)
-                in
-                { balance = 3000, gameState = initialGameState }
-                    |> update (Bet 1000)
-                    |> Tuple.first
-                    |> Expect.equal { balance = 2000, gameState = Staked 1000 }
+        [ describe "When player makes a bet"
+            [ test "And it's accepted" <|
+                \() ->
+                    let
+                        initialGameState : GameState
+                        initialGameState =
+                            Resolved ( Yek, Du ) (MarkWins 0)
+                    in
+                    { balance = 3000, gameState = initialGameState }
+                        |> update (PlayerBets 1000)
+                        |> Tuple.first
+                        |> Expect.equal { balance = 2000, gameState = Staked 1000 }
+            , test "But balance is not sufficient" <|
+                \() ->
+                    let
+                        initialGameState : GameState
+                        initialGameState =
+                            Resolved ( Yek, Du ) (MarkWins 0)
+                    in
+                    { balance = 500, gameState = initialGameState }
+                        |> update (PlayerBets 1000)
+                        |> Tuple.first
+                        |> Expect.equal { balance = 500, gameState = initialGameState }
+            ]
         , describe "When the game resolves"
             [ test "And player wins" <|
                 \() ->
