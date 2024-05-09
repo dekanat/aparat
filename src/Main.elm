@@ -1,8 +1,9 @@
 module Main exposing (..)
 
+import Balance exposing (Balance(..))
 import Bet exposing (..)
 import Browser
-import Core exposing (Balance(..), Money, topUpBalance)
+import Core exposing (Money)
 import Debug exposing (toString)
 import Die exposing (Face(..), pictogramFor)
 import Element
@@ -90,7 +91,7 @@ update msg { balance, round } =
                 newState =
                     case gameResult of
                         ReturnToPlayer amount ->
-                            { balance = amount |> topUpBalance balance
+                            { balance = amount |> Balance.topUpBalance balance
                             , round = Resolved settledCombination gameResult
                             }
             in

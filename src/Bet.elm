@@ -1,6 +1,7 @@
 module Bet exposing (..)
 
-import Core exposing (Balance(..), Money)
+import Balance exposing (Balance(..))
+import Core exposing (Money)
 
 
 type Bet

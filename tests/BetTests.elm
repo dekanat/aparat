@@ -1,7 +1,7 @@
 module BetTests exposing (..)
 
+import Balance exposing (Balance(..))
 import Bet exposing (..)
-import Core exposing (Balance(..))
 import Expect exposing (..)
 import Result exposing (..)
 import Test exposing (..)

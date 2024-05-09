@@ -1,7 +1,7 @@
 module BenzinoTests exposing (..)
 
+import Balance exposing (Balance(..))
 import Bet exposing (Bet(..))
-import Core exposing (Balance(..))
 import Die exposing (Face(..))
 import Expect exposing (..)
 import Main exposing (GameResult(..), Msg(..), RoundState(..), determinePayout, update)
