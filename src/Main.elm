@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Bet exposing (..)
 import Browser
-import Core exposing (Money)
+import Core exposing (Balance(..), Money, topUpBalance)
 import Debug exposing (toString)
 import Die exposing (Face(..), pictogramFor)
 import Element
@@ -56,29 +56,30 @@ type RoundState
 
 
 type alias Model =
-    { balance : Money
+    { balance : Balance
     , round : RoundState
     }
 
 
 type Msg
-    = PlayerBets Money
+    = PlayerWantsToBet Money
     | RoundResolves Bet RollOutcome
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg { balance, round } =
     case msg of
-        PlayerBets moneyToBet ->
-            if moneyToBet > balance then
-                ( { balance = balance, round = round }, Cmd.none )
+        PlayerWantsToBet moneyToBet ->
+            case makeBet balance moneyToBet of
+                Ok ( bet, remainingBalance ) ->
+                    ( { balance = remainingBalance
+                      , round = Initiated
+                      }
+                    , Random.generate (RoundResolves bet) rollingPairOfDice
+                    )
 
-            else
-                ( { balance = balance - moneyToBet
-                  , round = Initiated
-                  }
-                , Random.generate (RoundResolves (Bet moneyToBet)) rollingPairOfDice
-                )
+                Err _ ->
+                    ( { balance = balance, round = round }, Cmd.none )
 
         RoundResolves bet settledCombination ->
             let
@@ -89,7 +90,7 @@ update msg { balance, round } =
                 newState =
                     case gameResult of
                         MarkWins amount ->
-                            { balance = balance + amount
+                            { balance = amount |> topUpBalance balance
                             , round = Resolved settledCombination gameResult
                             }
             in
@@ -98,7 +99,7 @@ update msg { balance, round } =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { balance = 3000, round = Resolved ( Yek, Du ) (MarkWins 0) }
+    ( { balance = Balance 3000, round = Resolved ( Yek, Du ) (MarkWins 0) }
     , Cmd.none
     )
 
@@ -107,11 +108,13 @@ init _ =
 -- VIEW
 
 
-displayBenzinoScene : { a | balance : Money, round : RoundState } -> Element.Element Msg
+displayBenzinoScene : { a | balance : Balance, round : RoundState } -> Element.Element Msg
 displayBenzinoScene { balance, round } =
     let
         balanceDisplay =
-            Element.text ("Balance: " ++ toString balance)
+            case balance of
+                Balance b ->
+                    Element.text ("Balance: " ++ toString b)
 
         rollResultsDisplay =
             case round of
@@ -134,7 +137,7 @@ displayBenzinoScene { balance, round } =
                 , Element.padding 8
                 ]
                 { label = Element.text "Roll for 1000"
-                , onPress = Just (PlayerBets 1000)
+                , onPress = Just (PlayerWantsToBet 1000)
                 }
     in
     Element.column []

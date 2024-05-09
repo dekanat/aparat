@@ -1,6 +1,7 @@
 module BenzinoTests exposing (..)
 
 import Bet exposing (Bet(..))
+import Core exposing (Balance(..))
 import Die exposing (Face(..))
 import Expect exposing (..)
 import Main exposing (GameResult(..), Msg(..), RoundState(..), evaluateGameResult, update)
@@ -19,10 +20,10 @@ updateTests =
                         initialGameState =
                             Resolved ( Yek, Du ) (MarkWins 0)
                     in
-                    { balance = 3000, round = initialGameState }
-                        |> update (PlayerBets 1000)
+                    { balance = Balance 3000, round = initialGameState }
+                        |> update (PlayerWantsToBet 1000)
                         |> Tuple.first
-                        |> Expect.equal { balance = 2000, round = Initiated }
+                        |> Expect.equal { balance = Balance 2000, round = Initiated }
             , test "But balance is not sufficient" <|
                 \() ->
                     let
@@ -30,10 +31,10 @@ updateTests =
                         initialGameState =
                             Resolved ( Yek, Du ) (MarkWins 0)
                     in
-                    { balance = 500, round = initialGameState }
-                        |> update (PlayerBets 1000)
+                    { balance = Balance 500, round = initialGameState }
+                        |> update (PlayerWantsToBet 1000)
                         |> Tuple.first
-                        |> Expect.equal { balance = 500, round = initialGameState }
+                        |> Expect.equal { balance = Balance 500, round = initialGameState }
             ]
         , describe "When the game resolves"
             [ test "And player wins" <|
@@ -42,11 +43,11 @@ updateTests =
                         winningCombination =
                             ( Yek, Yek )
                     in
-                    { balance = 2000, round = Initiated }
+                    { balance = Balance 2000, round = Initiated }
                         |> update (RoundResolves (Bet 1000) winningCombination)
                         |> Tuple.first
                         |> Expect.equal
-                            { balance = 8000
+                            { balance = Balance 8000
                             , round = Resolved winningCombination (MarkWins 6000)
                             }
             , test "And player loses" <|
@@ -55,11 +56,11 @@ updateTests =
                         losingRoll =
                             ( Yek, Du )
                     in
-                    { balance = 2000, round = Initiated }
+                    { balance = Balance 2000, round = Initiated }
                         |> update (RoundResolves (Bet 1000) losingRoll)
                         |> Tuple.first
                         |> Expect.equal
-                            { balance = 2000
+                            { balance = Balance 2000
                             , round = Resolved losingRoll (MarkWins 0)
                             }
             ]
