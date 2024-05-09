@@ -1,15 +1,17 @@
 module Bet exposing (..)
 
+import Core exposing (Money)
+
 
 type Bet
-    = Bet Int
+    = Bet Money
 
 
 type BettingDifficulties
     = NotEnoughAmount
 
 
-makeBet : Int -> Int -> Result BettingDifficulties ( Int, Bet )
+makeBet : Money -> Money -> Result BettingDifficulties ( Money, Bet )
 makeBet balance amount =
     if amount < balance then
         Ok ( balance - amount, Bet amount )

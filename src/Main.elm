@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Bet exposing (..)
 import Browser
+import Core exposing (Money)
 import Debug exposing (toString)
 import Die exposing (Face(..), pictogramFor)
 import Element
@@ -28,10 +29,6 @@ main =
 
 
 -- MODEL
-
-
-type alias Money =
-    Int
 
 
 type GameResult
