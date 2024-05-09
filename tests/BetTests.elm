@@ -1,6 +1,7 @@
 module BetTests exposing (..)
 
 import Bet exposing (..)
+import Core exposing (Balance(..))
 import Expect exposing (..)
 import Result exposing (..)
 import Test exposing (..)
@@ -11,10 +12,10 @@ updateTests =
     describe "makeBet"
         [ test "successfully makes a bet" <|
             \() ->
-                makeBet 1000 100
-                    |> Expect.equal (Ok ( 900, Bet 100 ))
+                makeBet (Balance 1000) 100
+                    |> Expect.equal (Ok ( Bet 100, Balance 900 ))
         , test "fails to make a over-the-budget bets" <|
             \() ->
-                makeBet 1300 1500
+                makeBet (Balance 1300) 1500
                     |> Expect.equal (Err NotEnoughAmount)
         ]
