@@ -1,5 +1,6 @@
 module BenzinoTests exposing (..)
 
+import Bet exposing (Bet(..))
 import Die exposing (Face(..))
 import Expect exposing (..)
 import Main exposing (GameResult(..), Msg(..), RoundState(..), evaluateGameResult, update)
@@ -42,7 +43,7 @@ updateTests =
                             ( Yek, Yek )
                     in
                     { balance = 2000, round = Initiated }
-                        |> update (RoundResolves 1000 winningCombination)
+                        |> update (RoundResolves (Bet 1000) winningCombination)
                         |> Tuple.first
                         |> Expect.equal
                             { balance = 8000
@@ -55,7 +56,7 @@ updateTests =
                             ( Yek, Du )
                     in
                     { balance = 2000, round = Initiated }
-                        |> update (RoundResolves 1000 losingRoll)
+                        |> update (RoundResolves (Bet 1000) losingRoll)
                         |> Tuple.first
                         |> Expect.equal
                             { balance = 2000
@@ -70,6 +71,7 @@ gameRulesTests =
     describe "Player Wins"
         [ test "When both dice are the same" <|
             \() ->
-                evaluateGameResult 1000 ( Yek, Yek )
+                Bet 1000
+                    |> evaluateGameResult ( Yek, Yek )
                     |> Expect.equal (MarkWins 6000)
         ]

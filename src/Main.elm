@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Bet exposing (..)
 import Browser
 import Debug exposing (toString)
 import Die exposing (Face(..), pictogramFor)
@@ -37,17 +38,19 @@ type GameResult
     = MarkWins Int
 
 
-evaluateGameResult : Money -> RollOutcome -> GameResult
-evaluateGameResult wager ( a, b ) =
-    let
-        winScale =
-            if a == b then
-                6
+evaluateGameResult : RollOutcome -> Bet -> GameResult
+evaluateGameResult ( a, b ) bet =
+    case bet of
+        Bet amount ->
+            let
+                winScale =
+                    if a == b then
+                        6
 
-            else
-                0
-    in
-    MarkWins (wager * winScale)
+                    else
+                        0
+            in
+            MarkWins (amount * winScale)
 
 
 type RoundState
@@ -63,27 +66,28 @@ type alias Model =
 
 type Msg
     = PlayerBets Money
-    | RoundResolves Money RollOutcome
+    | RoundResolves Bet RollOutcome
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg { balance, round } =
     case msg of
-        PlayerBets bet ->
-            if bet > balance then
+        PlayerBets moneyToBet ->
+            if moneyToBet > balance then
                 ( { balance = balance, round = round }, Cmd.none )
 
             else
-                ( { balance = balance - bet
+                ( { balance = balance - moneyToBet
                   , round = Initiated
                   }
-                , Random.generate (RoundResolves bet) rollingPairOfDice
+                , Random.generate (RoundResolves (Bet moneyToBet)) rollingPairOfDice
                 )
 
         RoundResolves bet settledCombination ->
             let
                 gameResult =
-                    evaluateGameResult bet settledCombination
+                    bet
+                        |> evaluateGameResult settledCombination
 
                 newState =
                     case gameResult of
