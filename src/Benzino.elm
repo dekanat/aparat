@@ -1,8 +1,8 @@
 module Benzino exposing (..)
 
-import Bet exposing (Bet(..))
 import Common exposing (Money)
-import PairOfDice exposing (RollOutcome)
+import Die exposing (Face, rollingDie)
+import Random
 
 
 type RoundState
@@ -27,3 +27,45 @@ determinePayout ( rolledA, rolledB ) bet =
                         -1
             in
             ReturnToPlayer (amount * winScale)
+
+
+type alias RollOutcome =
+    ( Face, Face )
+
+
+rollingPairOfDice : Random.Generator RollOutcome
+rollingPairOfDice =
+    Random.pair rollingDie rollingDie
+
+
+type Balance
+    = Balance Money
+
+
+topUpBalance : Balance -> Money -> Balance
+topUpBalance currentBalance amountToAdd =
+    case currentBalance of
+        Balance availableAmount ->
+            Balance (availableAmount + amountToAdd)
+
+
+type Bet
+    = Bet Money
+
+
+type BettingDifficulties
+    = NotEnoughAmount
+
+
+makeBet : Balance -> Money -> Result BettingDifficulties ( Bet, Balance )
+makeBet balance amountToBet =
+    case balance of
+        Balance availableFunds ->
+            if amountToBet < availableFunds then
+                Ok
+                    ( Bet amountToBet
+                    , Balance (availableFunds - amountToBet)
+                    )
+
+            else
+                Err NotEnoughAmount

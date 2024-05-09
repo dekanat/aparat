@@ -1,8 +1,6 @@
 module Main exposing (..)
 
-import Balance exposing (Balance(..))
-import Benzino exposing (RoundOutcome(..), RoundState(..))
-import Bet exposing (..)
+import Benzino exposing (Balance(..), Bet(..), RollOutcome, RoundOutcome(..), RoundState(..), makeBet, rollingPairOfDice, topUpBalance)
 import Browser
 import Common exposing (Money)
 import Debug exposing (toString)
@@ -12,7 +10,6 @@ import Element.Border
 import Element.Font
 import Element.Input
 import Html exposing (Html)
-import PairOfDice exposing (RollOutcome, rollingPairOfDice)
 import Random
 
 
@@ -68,7 +65,7 @@ update msg { balance, round } =
                 newState =
                     case afterEffecs of
                         ReturnToPlayer amount ->
-                            { balance = amount |> Balance.topUpBalance balance
+                            { balance = amount |> topUpBalance balance
                             , round = Resolved settledCombination afterEffecs
                             }
             in
