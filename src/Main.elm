@@ -1,8 +1,8 @@
 module Main exposing (..)
 
+import Balance exposing (Balance(..))
 import Benzino exposing (Bet(..), RollOutcome, RoundOutcome(..), RoundState(..), makeBet, rollingPairOfDice)
 import Browser
-import Common.Balance exposing (Balance(..))
 import Common.Die exposing (Face(..), pictogramFor)
 import Common.Money exposing (Money)
 import Debug exposing (toString)
@@ -46,7 +46,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg { balance, round } =
     case msg of
         PlayerWantsToBet moneyToBet ->
-            case makeBet balance moneyToBet of
+            case makeBet moneyToBet balance of
                 Ok ( bet, remainingBalance ) ->
                     ( { balance = remainingBalance
                       , round = Initiated
@@ -66,7 +66,7 @@ update msg { balance, round } =
                 newState =
                     case afterEffecs of
                         ReturnToPlayer amount ->
-                            { balance = amount |> Common.Balance.topUpBalance balance
+                            { balance = Balance.topUp balance amount
                             , round = Resolved settledCombination afterEffecs
                             }
             in

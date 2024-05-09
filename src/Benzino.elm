@@ -1,6 +1,6 @@
 module Benzino exposing (..)
 
-import Common.Balance exposing (Balance(..))
+import Balance exposing (Balance(..), BalanceIssues(..))
 import Common.Die exposing (Face, rollingDie)
 import Common.Money exposing (Money)
 import Random
@@ -43,19 +43,11 @@ type Bet
     = Bet Money
 
 
-type BettingDifficulties
-    = NotEnoughAmount
+makeBet : Money -> Balance -> Result BalanceIssues ( Bet, Balance )
+makeBet amountToBet balance =
+    case Balance.takeFrom balance amountToBet of
+        Ok newBalance ->
+            Ok ( Bet amountToBet, newBalance )
 
-
-makeBet : Balance -> Money -> Result BettingDifficulties ( Bet, Balance )
-makeBet balance amountToBet =
-    case balance of
-        Balance availableFunds ->
-            if amountToBet < availableFunds then
-                Ok
-                    ( Bet amountToBet
-                    , Balance (availableFunds - amountToBet)
-                    )
-
-            else
-                Err NotEnoughAmount
+        Err any ->
+            Err any

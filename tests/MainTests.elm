@@ -1,7 +1,7 @@
 module MainTests exposing (..)
 
 import Benzino exposing (Bet(..), RoundOutcome(..), RoundState(..))
-import Common.Balance exposing (Balance(..))
+import Balance exposing (Balance(..))
 import Common.Die exposing (Face(..))
 import Expect exposing (..)
 import Main exposing (Msg(..), update)
