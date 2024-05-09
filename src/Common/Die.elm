@@ -1,4 +1,4 @@
-module Die exposing (..)
+module Common.Die exposing (..)
 
 import Random
 

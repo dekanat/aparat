@@ -1,7 +1,8 @@
 module BenzinoTests exposing (..)
 
-import Benzino exposing (Balance(..), Bet(..), BettingDifficulties(..), RoundOutcome(..), makeBet)
-import Die exposing (Face(..))
+import Benzino exposing (Bet(..), BettingDifficulties(..), RoundOutcome(..), makeBet)
+import Common.Balance exposing (Balance(..))
+import Common.Die exposing (Face(..))
 import Expect exposing (..)
 import Result exposing (..)
 import Test exposing (..)

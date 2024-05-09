@@ -1,7 +1,8 @@
 module Benzino exposing (..)
 
-import Common exposing (Money)
-import Die exposing (Face, rollingDie)
+import Common.Balance exposing (Balance(..))
+import Common.Die exposing (Face, rollingDie)
+import Common.Money exposing (Money)
 import Random
 
 
@@ -36,17 +37,6 @@ type alias RollOutcome =
 rollingPairOfDice : Random.Generator RollOutcome
 rollingPairOfDice =
     Random.pair rollingDie rollingDie
-
-
-type Balance
-    = Balance Money
-
-
-topUpBalance : Balance -> Money -> Balance
-topUpBalance currentBalance amountToAdd =
-    case currentBalance of
-        Balance availableAmount ->
-            Balance (availableAmount + amountToAdd)
 
 
 type Bet
