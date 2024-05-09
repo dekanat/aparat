@@ -21,10 +21,10 @@ determinePayout ( rolledA, rolledB ) bet =
             let
                 winScale =
                     if rolledA == rolledB then
-                        5
+                        6
 
                     else
-                        -1
+                        0
             in
             ReturnToPlayer (amount * winScale)
 
