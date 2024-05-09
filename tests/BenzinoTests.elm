@@ -1,10 +1,11 @@
 module BenzinoTests exposing (..)
 
 import Balance exposing (Balance(..))
+import Benzino exposing (RoundOutcome(..), RoundState(..))
 import Bet exposing (Bet(..))
 import Die exposing (Face(..))
 import Expect exposing (..)
-import Main exposing (GameResult(..), Msg(..), RoundState(..), determinePayout, update)
+import Main exposing (Msg(..), update)
 import Test exposing (..)
 import Time exposing (Weekday(..))
 
@@ -73,6 +74,6 @@ gameRulesTests =
         [ test "When both dice are the same" <|
             \() ->
                 Bet 1000
-                    |> determinePayout ( Yek, Yek )
+                    |> Benzino.determinePayout ( Yek, Yek )
                     |> Expect.equal (ReturnToPlayer 6000)
         ]

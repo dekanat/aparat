@@ -1,6 +1,6 @@
 module Balance exposing (..)
 
-import Core exposing (Money)
+import Common exposing (Money)
 
 
 type Balance

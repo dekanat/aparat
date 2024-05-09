@@ -1,9 +1,10 @@
 module Main exposing (..)
 
 import Balance exposing (Balance(..))
+import Benzino exposing (RoundOutcome(..), RoundState(..))
 import Bet exposing (..)
 import Browser
-import Core exposing (Money)
+import Common exposing (Money)
 import Debug exposing (toString)
 import Die exposing (Face(..), pictogramFor)
 import Element
@@ -30,30 +31,6 @@ main =
 
 
 -- MODEL
-
-
-type GameResult
-    = ReturnToPlayer Money
-
-
-determinePayout : RollOutcome -> Bet -> GameResult
-determinePayout ( a, b ) bet =
-    case bet of
-        Bet amount ->
-            let
-                winScale =
-                    if a == b then
-                        6
-
-                    else
-                        0
-            in
-            ReturnToPlayer (amount * winScale)
-
-
-type RoundState
-    = Initiated
-    | Resolved RollOutcome GameResult
 
 
 type alias Model =
@@ -84,15 +61,15 @@ update msg { balance, round } =
 
         RoundResolves bet settledCombination ->
             let
-                gameResult =
+                afterEffecs =
                     bet
-                        |> determinePayout settledCombination
+                        |> Benzino.determinePayout settledCombination
 
                 newState =
-                    case gameResult of
+                    case afterEffecs of
                         ReturnToPlayer amount ->
                             { balance = amount |> Balance.topUpBalance balance
-                            , round = Resolved settledCombination gameResult
+                            , round = Resolved settledCombination afterEffecs
                             }
             in
             ( newState, Cmd.none )
