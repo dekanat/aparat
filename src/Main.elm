@@ -46,75 +46,61 @@ type alias RollResult =
 
 type GameResult
     = MarkWins Int
-    | ZaraWins Int
 
 
 evaluateGameResult : Money -> RollResult -> GameResult
 evaluateGameResult wager ( a, b ) =
-    if a == b then
-        MarkWins (wager * 6)
+    let
+        winScale =
+            if a == b then
+                6
 
-    else
-        ZaraWins wager
+            else
+                0
+    in
+    MarkWins (wager * winScale)
 
 
-type alias Accounts =
-    { mark : Money, zara : Money }
-
-
-type GameState
-    = Staked Money
+type RoundState
+    = Initiated
     | Resolved RollResult GameResult
 
 
 type alias Model =
     { balance : Money
-    , gameState : GameState
+    , round : RoundState
     }
 
 
 type Msg
     = PlayerBets Money
-    | GameResolves RollResult
+    | RoundResolves Money RollResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg { balance, gameState } =
+update msg { balance, round } =
     case msg of
-        PlayerBets amount ->
-            if amount > balance then
-                ( { balance = balance, gameState = gameState }, Cmd.none )
+        PlayerBets bet ->
+            if bet > balance then
+                ( { balance = balance, round = round }, Cmd.none )
 
             else
-                ( { balance = balance - amount
-                  , gameState = Staked amount
+                ( { balance = balance - bet
+                  , round = Initiated
                   }
-                , Random.generate GameResolves dieRoller
+                , Random.generate (RoundResolves bet) dieRoller
                 )
 
-        GameResolves rollResults ->
+        RoundResolves bet rollResults ->
             let
-                wager =
-                    case gameState of
-                        Staked bet ->
-                            bet
-
-                        _ ->
-                            0
-
                 gameResult =
-                    evaluateGameResult wager rollResults
+                    evaluateGameResult bet rollResults
 
                 newState =
                     case gameResult of
                         MarkWins amount ->
                             { balance = balance + amount
-                            , gameState = Resolved rollResults gameResult
-                            }
-
-                        ZaraWins _ ->
-                            { balance = balance
-                            , gameState = Resolved rollResults gameResult
+                            , round = Resolved rollResults gameResult
                             }
             in
             ( newState, Cmd.none )
@@ -122,7 +108,7 @@ update msg { balance, gameState } =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { balance = 3000, gameState = Resolved ( Yek, Du ) (MarkWins 0) }
+    ( { balance = 3000, round = Resolved ( Yek, Du ) (MarkWins 0) }
     , Cmd.none
     )
 
@@ -151,15 +137,15 @@ dieGenerator =
 -- VIEW
 
 
-displayBenzinoScene : { a | balance : Money, gameState : GameState } -> Element.Element Msg
-displayBenzinoScene { balance, gameState } =
+displayBenzinoScene : { a | balance : Money, round : RoundState } -> Element.Element Msg
+displayBenzinoScene { balance, round } =
     let
         balanceDisplay =
             Element.text ("Balance: " ++ toString balance)
 
         rollResultsDisplay =
-            case gameState of
-                Staked _ ->
+            case round of
+                Initiated ->
                     Element.text "Rolling..."
 
                 Resolved ( rolledA, rolledB ) _ ->
