@@ -4,7 +4,7 @@ import Bet exposing (Bet(..))
 import Core exposing (Balance(..))
 import Die exposing (Face(..))
 import Expect exposing (..)
-import Main exposing (GameResult(..), Msg(..), RoundState(..), evaluateGameResult, update)
+import Main exposing (GameResult(..), Msg(..), RoundState(..), determinePayout, update)
 import Test exposing (..)
 import Time exposing (Weekday(..))
 
@@ -18,7 +18,7 @@ updateTests =
                     let
                         initialGameState : RoundState
                         initialGameState =
-                            Resolved ( Yek, Du ) (MarkWins 0)
+                            Resolved ( Yek, Du ) (ReturnToPlayer 0)
                     in
                     { balance = Balance 3000, round = initialGameState }
                         |> update (PlayerWantsToBet 1000)
@@ -29,7 +29,7 @@ updateTests =
                     let
                         initialGameState : RoundState
                         initialGameState =
-                            Resolved ( Yek, Du ) (MarkWins 0)
+                            Resolved ( Yek, Du ) (ReturnToPlayer 0)
                     in
                     { balance = Balance 500, round = initialGameState }
                         |> update (PlayerWantsToBet 1000)
@@ -48,7 +48,7 @@ updateTests =
                         |> Tuple.first
                         |> Expect.equal
                             { balance = Balance 8000
-                            , round = Resolved winningCombination (MarkWins 6000)
+                            , round = Resolved winningCombination (ReturnToPlayer 6000)
                             }
             , test "And player loses" <|
                 \() ->
@@ -61,7 +61,7 @@ updateTests =
                         |> Tuple.first
                         |> Expect.equal
                             { balance = Balance 2000
-                            , round = Resolved losingRoll (MarkWins 0)
+                            , round = Resolved losingRoll (ReturnToPlayer 0)
                             }
             ]
         ]
@@ -73,6 +73,6 @@ gameRulesTests =
         [ test "When both dice are the same" <|
             \() ->
                 Bet 1000
-                    |> evaluateGameResult ( Yek, Yek )
-                    |> Expect.equal (MarkWins 6000)
+                    |> determinePayout ( Yek, Yek )
+                    |> Expect.equal (ReturnToPlayer 6000)
         ]

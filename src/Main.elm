@@ -32,11 +32,11 @@ main =
 
 
 type GameResult
-    = MarkWins Int
+    = ReturnToPlayer Money
 
 
-evaluateGameResult : RollOutcome -> Bet -> GameResult
-evaluateGameResult ( a, b ) bet =
+determinePayout : RollOutcome -> Bet -> GameResult
+determinePayout ( a, b ) bet =
     case bet of
         Bet amount ->
             let
@@ -47,7 +47,7 @@ evaluateGameResult ( a, b ) bet =
                     else
                         0
             in
-            MarkWins (amount * winScale)
+            ReturnToPlayer (amount * winScale)
 
 
 type RoundState
@@ -85,11 +85,11 @@ update msg { balance, round } =
             let
                 gameResult =
                     bet
-                        |> evaluateGameResult settledCombination
+                        |> determinePayout settledCombination
 
                 newState =
                     case gameResult of
-                        MarkWins amount ->
+                        ReturnToPlayer amount ->
                             { balance = amount |> topUpBalance balance
                             , round = Resolved settledCombination gameResult
                             }
@@ -99,7 +99,9 @@ update msg { balance, round } =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { balance = Balance 3000, round = Resolved ( Yek, Du ) (MarkWins 0) }
+    ( { balance = Balance 3000
+      , round = Resolved ( Yek, Du ) (ReturnToPlayer 0)
+      }
     , Cmd.none
     )
 
