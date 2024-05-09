@@ -1,7 +1,8 @@
 module BenzinoTests exposing (..)
 
+import Die exposing (Face(..))
 import Expect exposing (..)
-import Main exposing (DieFace(..), GameResult(..), Msg(..), RoundState(..), evaluateGameResult, update)
+import Main exposing (GameResult(..), Msg(..), RoundState(..), evaluateGameResult, update)
 import Test exposing (..)
 import Time exposing (Weekday(..))
 

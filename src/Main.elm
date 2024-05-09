@@ -2,11 +2,13 @@ module Main exposing (..)
 
 import Browser
 import Debug exposing (toString)
+import Die exposing (Face(..), pictogramFor)
 import Element
 import Element.Border
 import Element.Font
 import Element.Input
 import Html exposing (Html)
+import PairOfDice exposing (RollOutcome, rollingPairOfDice)
 import Random
 
 
@@ -31,24 +33,11 @@ type alias Money =
     Int
 
 
-type DieFace
-    = Yek
-    | Du
-    | Se
-    | Jhar
-    | Panj
-    | Shesh
-
-
-type alias RollResult =
-    ( DieFace, DieFace )
-
-
 type GameResult
     = MarkWins Int
 
 
-evaluateGameResult : Money -> RollResult -> GameResult
+evaluateGameResult : Money -> RollOutcome -> GameResult
 evaluateGameResult wager ( a, b ) =
     let
         winScale =
@@ -63,7 +52,7 @@ evaluateGameResult wager ( a, b ) =
 
 type RoundState
     = Initiated
-    | Resolved RollResult GameResult
+    | Resolved RollOutcome GameResult
 
 
 type alias Model =
@@ -74,7 +63,7 @@ type alias Model =
 
 type Msg
     = PlayerBets Money
-    | RoundResolves Money RollResult
+    | RoundResolves Money RollOutcome
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -88,19 +77,19 @@ update msg { balance, round } =
                 ( { balance = balance - bet
                   , round = Initiated
                   }
-                , Random.generate (RoundResolves bet) dieRoller
+                , Random.generate (RoundResolves bet) rollingPairOfDice
                 )
 
-        RoundResolves bet rollResults ->
+        RoundResolves bet settledCombination ->
             let
                 gameResult =
-                    evaluateGameResult bet rollResults
+                    evaluateGameResult bet settledCombination
 
                 newState =
                     case gameResult of
                         MarkWins amount ->
                             { balance = balance + amount
-                            , round = Resolved rollResults gameResult
+                            , round = Resolved settledCombination gameResult
                             }
             in
             ( newState, Cmd.none )
@@ -111,26 +100,6 @@ init _ =
     ( { balance = 3000, round = Resolved ( Yek, Du ) (MarkWins 0) }
     , Cmd.none
     )
-
-
-
--- UPDAT
-
-
-dieRoller : Random.Generator RollResult
-dieRoller =
-    Random.pair dieGenerator dieGenerator
-
-
-dieGenerator : Random.Generator DieFace
-dieGenerator =
-    Random.uniform Yek
-        [ Du
-        , Se
-        , Jhar
-        , Panj
-        , Shesh
-        ]
 
 
 
@@ -180,25 +149,3 @@ view : Model -> Html Msg
 view model =
     Element.layout [ Element.padding 50 ]
         (displayBenzinoScene model)
-
-
-pictogramFor : DieFace -> String
-pictogramFor dieFace =
-    case dieFace of
-        Yek ->
-            "⚀"
-
-        Du ->
-            "⚁"
-
-        Se ->
-            "⚂"
-
-        Jhar ->
-            "⚃"
-
-        Panj ->
-            "⚄"
-
-        Shesh ->
-            "⚅"
