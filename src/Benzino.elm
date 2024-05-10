@@ -6,13 +6,36 @@ import Common.Money exposing (Money)
 import Random
 
 
+type Bet
+    = Bet Money
+
+
+type RoundOutcome
+    = ReturnToPlayer Money
+
+
+type alias RollOutcome =
+    ( Face, Face )
+
+
 type RoundState
     = Initiated
     | Resolved RollOutcome RoundOutcome
 
 
-type RoundOutcome
-    = ReturnToPlayer Money
+makeBet : Money -> Balance -> Result BalanceIssues ( Bet, Balance )
+makeBet amountToBet balance =
+    let
+        acceptBet reducedBalance =
+            ( Bet amountToBet, reducedBalance )
+    in
+    Balance.takeFrom balance amountToBet
+        |> Result.map acceptBet
+
+
+rollingPairOfDice : Random.Generator RollOutcome
+rollingPairOfDice =
+    Random.pair rollingDie rollingDie
 
 
 determinePayout : RollOutcome -> Bet -> RoundOutcome
@@ -28,26 +51,3 @@ determinePayout ( rolledA, rolledB ) bet =
                         0
             in
             ReturnToPlayer (amount * winScale)
-
-
-type alias RollOutcome =
-    ( Face, Face )
-
-
-rollingPairOfDice : Random.Generator RollOutcome
-rollingPairOfDice =
-    Random.pair rollingDie rollingDie
-
-
-type Bet
-    = Bet Money
-
-
-makeBet : Money -> Balance -> Result BalanceIssues ( Bet, Balance )
-makeBet amountToBet balance =
-    case Balance.takeFrom balance amountToBet of
-        Ok newBalance ->
-            Ok ( Bet amountToBet, newBalance )
-
-        Err any ->
-            Err any
