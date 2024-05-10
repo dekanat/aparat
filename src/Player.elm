@@ -1,12 +1,8 @@
 module Player exposing (..)
 
-import Aparat exposing (Payout(..))
+import Aparat exposing (Bet(..), Payout(..))
 import Balance exposing (Balance(..), BalanceIssues(..), topUp)
 import Common.Money exposing (Money)
-
-
-type Bet
-    = Bet Money
 
 
 makeBet : Money -> Balance -> Result BalanceIssues ( Bet, Balance )

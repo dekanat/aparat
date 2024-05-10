@@ -1,9 +1,17 @@
 module Aparat exposing (..)
 
-import Benzino exposing (Bet(..), RollOutcome)
-import Common.Die exposing (rollingDie)
+import Benzino exposing (RollOutcome)
+import Common.Die exposing (Face, rollingDie)
 import Common.Money exposing (Money)
 import Random exposing (Seed)
+
+
+type Bet
+    = Bet Money
+
+
+type alias RollOutcome =
+    ( Face, Face )
 
 
 type Payout

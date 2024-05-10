@@ -1,12 +1,10 @@
 module AparatTests exposing (..)
 
-import Aparat exposing (Payout(..), determine, playRound)
-import Benzino exposing (Bet(..))
+import Aparat exposing (Bet(..), Payout(..), determine, playRound)
 import Common.Die exposing (Face(..))
 import Debug exposing (toString)
 import Expect exposing (..)
 import Fuzz exposing (..)
-import List
 import Random exposing (initialSeed)
 import Set
 import Test exposing (..)

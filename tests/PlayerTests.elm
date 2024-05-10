@@ -1,6 +1,6 @@
 module PlayerTests exposing (..)
 
-import Aparat exposing (Payout(..))
+import Aparat exposing (Bet(..), Payout(..))
 import Balance exposing (Balance(..))
 import Expect exposing (..)
 import Player exposing (..)
