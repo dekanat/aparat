@@ -1,33 +1,15 @@
 module AparatTests exposing (..)
 
-import Aparat exposing (Payout(..), determine)
-import Benzino exposing (Bet(..), RollOutcome, rollingPairOfDice)
+import Aparat exposing (Payout(..), determine, playRound)
+import Benzino exposing (Bet(..))
 import Common.Die exposing (Face(..))
 import Debug exposing (toString)
 import Expect exposing (..)
 import Fuzz exposing (..)
 import List
-import Random exposing (Seed, initialSeed)
+import Random exposing (initialSeed)
 import Set
 import Test exposing (..)
-
-
-type alias Ban =
-    { payout : Payout
-    , rollOutcome : RollOutcome
-    }
-
-
-playRound : Seed -> Bet -> ( Ban, Seed )
-playRound seed bet =
-    let
-        ( rollOutcome, newSeed ) =
-            Random.step rollingPairOfDice seed
-
-        payout =
-            determine bet rollOutcome
-    in
-    ( { payout = payout, rollOutcome = rollOutcome }, newSeed )
 
 
 aparatTests : Test

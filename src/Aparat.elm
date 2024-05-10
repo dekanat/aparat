@@ -1,7 +1,9 @@
 module Aparat exposing (..)
 
 import Benzino exposing (Bet(..), RollOutcome)
+import Common.Die exposing (rollingDie)
 import Common.Money exposing (Money)
+import Random exposing (Seed)
 
 
 type Payout
@@ -18,3 +20,26 @@ determine bet rollOutcome =
 
             else
                 Lose amount
+
+
+type alias RoundResolution =
+    { payout : Payout
+    , rollOutcome : RollOutcome
+    }
+
+
+playRound : Seed -> Bet -> ( RoundResolution, Seed )
+playRound seed bet =
+    let
+        ( rollOutcome, newSeed ) =
+            Random.step rollingPairOfDice seed
+
+        payout =
+            determine bet rollOutcome
+    in
+    ( { payout = payout, rollOutcome = rollOutcome }, newSeed )
+
+
+rollingPairOfDice : Random.Generator RollOutcome
+rollingPairOfDice =
+    Random.pair rollingDie rollingDie
