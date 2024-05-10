@@ -1,11 +1,14 @@
 module AparatTests exposing (..)
 
 import Aparat exposing (Payout(..), determine)
-import Benzino exposing (Bet(..), RollOutcome, determinePayout)
+import Benzino exposing (Bet(..), RollOutcome, rollingPairOfDice)
 import Common.Die exposing (Face(..))
+import Debug exposing (toString)
 import Expect exposing (..)
 import Fuzz exposing (..)
+import List
 import Random exposing (Seed, initialSeed)
+import Set
 import Test exposing (..)
 
 
@@ -18,34 +21,60 @@ type alias Ban =
 playRound : Seed -> Bet -> ( Ban, Seed )
 playRound seed bet =
     let
-        rollOutcome =
-            ( Yek, Yek )
+        ( rollOutcome, newSeed ) =
+            Random.step rollingPairOfDice seed
 
         payout =
-            Win 3000
+            determine bet rollOutcome
     in
-    ( { payout = payout, rollOutcome = rollOutcome }, seed )
+    ( { payout = payout, rollOutcome = rollOutcome }, newSeed )
 
 
 aparatTests : Test
 aparatTests =
     describe "Aparat"
         [ describe "Round"
-            [ fuzz2 int int "should play on a bet" <|
-                \seedX amountToBet ->
+            [ fuzz2 int int "should pay based on roll outcome" <|
+                \salt amountToBet ->
                     let
                         currentSeed =
-                            initialSeed seedX
+                            initialSeed salt
 
                         ( result, _ ) =
                             Bet amountToBet
                                 |> playRound currentSeed
 
                         expectedPayoutFor =
-                            determine (Bet 500)
+                            determine (Bet amountToBet)
                     in
                     result.payout
                         |> Expect.equal (expectedPayoutFor result.rollOutcome)
+            , fuzz int "should vary outcome like a normal die" <|
+                \salt ->
+                    let
+                        currentSeed =
+                            initialSeed salt
+
+                        fixedBet =
+                            Bet 500
+
+                        itr _ ( outcomes, seed ) =
+                            let
+                                ( { rollOutcome }, newSeed ) =
+                                    playRound seed fixedBet
+                            in
+                            ( rollOutcome :: outcomes, newSeed )
+
+                        results =
+                            List.range 1 1000
+                                |> List.foldl itr ( [], currentSeed )
+                                |> Tuple.first
+                    in
+                    results
+                        |> List.map toString
+                        |> Set.fromList
+                        |> Set.size
+                        |> Expect.equal 36
             ]
         , describe "Determine Payout"
             [ test "that apprat notifies of wins" <|
