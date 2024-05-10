@@ -22,7 +22,7 @@ takeFrom : Balance -> Money -> Result BalanceIssues Balance
 takeFrom initialBalance amountToTake =
     case initialBalance of
         Balance initialAmount ->
-            if initialAmount > amountToTake then
+            if initialAmount >= amountToTake then
                 Ok (Balance (initialAmount - amountToTake))
 
             else
