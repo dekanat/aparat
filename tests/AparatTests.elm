@@ -1,6 +1,6 @@
 module AparatTests exposing (..)
 
-import Aparat exposing (Bet(..), Payout(..), determine, playRound)
+import Aparat exposing (playRound, resolvePayout)
 import Common.Die exposing (Face(..))
 import Debug exposing (toString)
 import Expect exposing (..)
@@ -21,14 +21,14 @@ aparatTests =
                             initialSeed salt
 
                         ( result, _ ) =
-                            Bet amountToBet
+                            amountToBet
                                 |> playRound currentSeed
 
                         expectedPayoutFor =
-                            determine (Bet amountToBet)
+                            resolvePayout amountToBet
                     in
                     result.payout
-                        |> Expect.equal (expectedPayoutFor result.rollOutcome)
+                        |> Expect.equal (expectedPayoutFor result.roll)
             , fuzz int "should vary outcome like a normal die" <|
                 \salt ->
                     let
@@ -36,14 +36,14 @@ aparatTests =
                             initialSeed salt
 
                         fixedBet =
-                            Bet 500
+                            500
 
-                        itr _ ( outcomes, seed ) =
+                        itr _ ( previousOutcomes, seed ) =
                             let
-                                ( { rollOutcome }, newSeed ) =
+                                ( { roll }, nextSeed ) =
                                     playRound seed fixedBet
                             in
-                            ( rollOutcome :: outcomes, newSeed )
+                            ( roll :: previousOutcomes, nextSeed )
 
                         results =
                             List.range 1 1000
@@ -59,11 +59,11 @@ aparatTests =
         , describe "Determine Payout"
             [ test "that apprat notifies of wins" <|
                 \() ->
-                    Aparat.determine (Bet 100) ( Panj, Panj )
-                        |> Expect.equal (Win 600)
+                    Aparat.resolvePayout 100 ( Panj, Panj )
+                        |> Expect.equal 600
             , test "that apprat notifies of lose" <|
                 \() ->
-                    Aparat.determine (Bet 100) ( Panj, Yek )
-                        |> Expect.equal (Lose 100)
+                    Aparat.resolvePayout 100 ( Panj, Yek )
+                        |> Expect.equal 0
             ]
         ]

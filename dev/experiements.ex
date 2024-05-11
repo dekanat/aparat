@@ -41,13 +41,13 @@ defmodule SeaC.MiscTest do
       |> Enum.map(simulate_game)
     end
 
-    pnduk =
+    resolution =
       simulate_many.(50)
       |> List.foldl({0, 0}, arrange_wins)
 
-    {p, c} = pnduk
+    {p, c} = resolution
 
-    IO.inspect(pnduk)
+    IO.inspect(resolution)
     IO.inspect(p / (p + c))
     IO.inspect(c / (p + c))
 

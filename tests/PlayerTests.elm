@@ -1,6 +1,6 @@
 module PlayerTests exposing (..)
 
-import Aparat exposing (Bet(..), Payout(..))
+import Aparat exposing (Payout)
 import Balance exposing (Balance(..))
 import Expect exposing (..)
 import Player exposing (..)
@@ -17,7 +17,7 @@ playerTests =
                         |> makeBet 100
                         |> Expect.equal
                             (Ok
-                                ( Bet 100
+                                ( 100
                                 , Balance 900
                                 )
                             )
@@ -32,8 +32,8 @@ playerTests =
                 \() ->
                     Balance 100
                         |> Expect.all
-                            [ roundUp (Win 200) >> Expect.equal (Balance 300)
-                            , roundUp (Lose 100) >> Expect.equal (Balance 100)
+                            [ roundUp 200 >> Expect.equal (Balance 300)
+                            , roundUp 0 >> Expect.equal (Balance 100)
                             ]
             ]
         ]
