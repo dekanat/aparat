@@ -2,7 +2,7 @@ module Aparat exposing (..)
 
 import Common.Die exposing (Face, rollingDie)
 import Common.Money exposing (Money)
-import Random exposing (Seed)
+import Random exposing (..)
 
 
 type alias DiceRoll =

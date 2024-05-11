@@ -11,29 +11,39 @@ import Random exposing (initialSeed)
 import Result exposing (..)
 import Set
 import Test exposing (..)
+import Time exposing (Weekday(..))
 
 
-autoplaySafeUntil : Money -> Money -> SessionContext -> SessionContext
-autoplaySafeUntil desiredBalance betAmount initialWorld =
+randomSession :
+    { a | initialBalance : Money, desiredBalance : Money, betAmount : Money }
+    -> Random.Seed
+    -> SessionContext
+randomSession config seed =
     let
-        isGoodEnough session =
+        isGoodToExit session =
             case session of
                 SettledSession { account } _ ->
-                    account |> Account.hasAtLeast desiredBalance
+                    account |> Account.hasAtLeast config.desiredBalance
 
-        loop currentWorld =
-            case currentWorld |> Benzino.playOnce betAmount of
-                Ok newWorld ->
-                    if isGoodEnough newWorld then
-                        newWorld
+        loop currentState =
+            case Benzino.playOnce config.betAmount currentState of
+                Ok evolvedState ->
+                    if isGoodToExit evolvedState then
+                        evolvedState
 
                     else
-                        loop newWorld
+                        loop evolvedState
 
                 Err _ ->
-                    currentWorld
+                    currentState
+
+        commonStarterState =
+            { history = []
+            , account = Account config.initialBalance
+            }
     in
-    initialWorld |> loop
+    loop
+        (SettledSession commonStarterState seed)
 
 
 compoundTest : Test
@@ -41,14 +51,6 @@ compoundTest =
     describe "Game"
         [ describe "Continous sessions"
             [ let
-                randomSession { initialBalance, desiredBalance, bet } seed =
-                    SettledSession
-                        { history = []
-                        , account = Account initialBalance
-                        }
-                        seed
-                        |> autoplaySafeUntil desiredBalance bet
-
                 extractAggregates session =
                     case session of
                         SettledSession aggregates _ ->
@@ -57,21 +59,22 @@ compoundTest =
               test "player may win or lose before doubling wealth" <|
                 \() ->
                     let
-                        seedsForIndependentSessions =
-                            List.range 1 100
-                                |> List.map initialSeed
+                        manySessions =
+                            100
+
+                        fixedSettings =
+                            { initialBalance = 1000
+                            , desiredBalance = 2000
+                            , betAmount = 100
+                            }
 
                         independentSessions =
-                            seedsForIndependentSessions
-                                |> List.map
-                                    (randomSession
-                                        { initialBalance = 1000
-                                        , desiredBalance = 2000
-                                        , bet = 100
-                                        }
-                                    )
+                            manySessions
+                                |> (List.range 1 >> List.map initialSeed)
+                                |> List.map (randomSession fixedSettings)
                                 |> List.map extractAggregates
                     in
+                    -- TODO: imi bereq mi hat
                     independentSessions
                         |> Expect.all
                             [ List.filter (.account >> Account.hasAtLeast 1000)
