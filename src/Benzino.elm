@@ -1,7 +1,7 @@
 module Benzino exposing (..)
 
 import Account exposing (Account(..))
-import Aparat exposing (DeterminedEvent, RandomOutcome)
+import Aparat exposing (DiceRoll)
 import Common.Money exposing (Money)
 import Random
 
@@ -42,10 +42,36 @@ playOnce amountToBet session =
                                 nextSeed
                     in
                     seed
-                        |> Aparat.resolveOutcome betAmount
+                        |> generateOutcome betAmount
                         |> settleWithOutcome
             in
             aggregates.account
                 |> Account.deduct amountToBet
                 |> Result.mapError (\_ -> NonRecoverable)
                 |> Result.map (resolveBet amountToBet)
+
+
+type alias DeterminedEvent =
+    { seed : Random.Seed
+    , bet : Money
+    , roll : DiceRoll
+    , payout : Money
+    }
+
+
+type alias RandomOutcome =
+    ( DeterminedEvent, Random.Seed )
+
+
+generateOutcome : Money -> Random.Seed -> ( DeterminedEvent, Random.Seed )
+generateOutcome bet seed =
+    let
+        resolveEvent : DiceRoll -> DeterminedEvent
+        resolveEvent roll =
+            roll
+                |> Aparat.determinPayout bet
+                |> DeterminedEvent seed bet roll
+    in
+    seed
+        |> Random.step Aparat.rollingPairOfDice
+        |> Tuple.mapFirst resolveEvent

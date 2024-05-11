@@ -1,8 +1,7 @@
 module Main exposing (..)
 
 import Account exposing (Account(..))
-import Aparat exposing (DeterminedEvent)
-import Benzino exposing (SessionContext(..))
+import Benzino exposing (DeterminedEvent, SessionContext(..))
 import Browser
 import Common.Die exposing (Face(..), pictogramFor)
 import Common.Money exposing (Money)

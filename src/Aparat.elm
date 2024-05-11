@@ -18,32 +18,6 @@ determinPayout betAmount ( rolledA, rolledB ) =
         0
 
 
-type alias DeterminedEvent =
-    { seed : Seed
-    , bet : Money
-    , roll : DiceRoll
-    , payout : Money
-    }
-
-
-type alias RandomOutcome =
-    ( DeterminedEvent, Seed )
-
-
-resolveOutcome : Money -> Seed -> ( DeterminedEvent, Seed )
-resolveOutcome bet seed =
-    let
-        resolveEvent : DiceRoll -> DeterminedEvent
-        resolveEvent roll =
-            roll
-                |> determinPayout bet
-                |> DeterminedEvent seed bet roll
-    in
-    seed
-        |> Random.step rollingPairOfDice
-        |> Tuple.mapFirst resolveEvent
-
-
 rollingPairOfDice : Random.Generator DiceRoll
 rollingPairOfDice =
     Random.pair rollingDie rollingDie
