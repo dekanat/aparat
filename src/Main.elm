@@ -1,6 +1,10 @@
 module Main exposing (..)
 
+import Balance exposing (Balance(..))
+import Benzino exposing (Bet(..), RollOutcome, RoundOutcome(..), RoundState(..), makeBet, rollingPairOfDice)
 import Browser
+import Common.Die exposing (Face(..), pictogramFor)
+import Common.Money exposing (Money)
 import Debug exposing (toString)
 import Element
 import Element.Border
@@ -27,94 +31,43 @@ main =
 -- MODEL
 
 
-type alias Money =
-    Int
-
-
-type DieFace
-    = Yek
-    | Du
-    | Se
-    | Jhar
-    | Panj
-    | Shesh
-
-
-type alias RollResult =
-    ( DieFace, DieFace )
-
-
-type GameResult
-    = MarkWins Int
-    | ZaraWins Int
-
-
-evaluateGameResult : Money -> RollResult -> GameResult
-evaluateGameResult wager ( a, b ) =
-    if a == b then
-        MarkWins (wager * 6)
-
-    else
-        ZaraWins wager
-
-
-type alias Accounts =
-    { mark : Money, zara : Money }
-
-
-type GameState
-    = Staked Money
-    | Resolved RollResult GameResult
-
-
 type alias Model =
-    { balance : Money
-    , gameState : GameState
+    { balance : Balance
+    , round : RoundState
     }
 
 
 type Msg
-    = PlayerBets Money
-    | GameResolves RollResult
+    = PlayerWantsToBet Money
+    | RoundResolves Bet RollOutcome
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg { balance, gameState } =
+update msg { balance, round } =
     case msg of
-        PlayerBets amount ->
-            if amount > balance then
-                ( { balance = balance, gameState = gameState }, Cmd.none )
+        PlayerWantsToBet moneyToBet ->
+            case makeBet moneyToBet balance of
+                Ok ( bet, remainingBalance ) ->
+                    ( { balance = remainingBalance
+                      , round = Initiated
+                      }
+                    , Random.generate (RoundResolves bet) rollingPairOfDice
+                    )
 
-            else
-                ( { balance = balance - amount
-                  , gameState = Staked amount
-                  }
-                , Random.generate GameResolves dieRoller
-                )
+                Err _ ->
+                    ( { balance = balance, round = round }, Cmd.none )
 
-        GameResolves rollResults ->
+        RoundResolves bet settledCombination ->
             let
-                wager =
-                    case gameState of
-                        Staked bet ->
-                            bet
-
-                        _ ->
-                            0
-
-                gameResult =
-                    evaluateGameResult wager rollResults
+                afterEffecs =
+                    bet
+                        |> Benzino.determinePayout settledCombination
 
                 newState =
-                    case gameResult of
-                        MarkWins amount ->
-                            { balance = balance + amount
-                            , gameState = Resolved rollResults gameResult
-                            }
-
-                        ZaraWins _ ->
-                            { balance = balance
-                            , gameState = Resolved rollResults gameResult
+                    case afterEffecs of
+                        ReturnToPlayer amount ->
+                            { balance = Balance.topUp balance amount
+                            , round = Resolved settledCombination afterEffecs
                             }
             in
             ( newState, Cmd.none )
@@ -122,44 +75,28 @@ update msg { balance, gameState } =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { balance = 3000, gameState = Resolved ( Yek, Du ) (MarkWins 0) }
+    ( { balance = Balance 3000
+      , round = Resolved ( Yek, Du ) (ReturnToPlayer 0)
+      }
     , Cmd.none
     )
-
-
-
--- UPDAT
-
-
-dieRoller : Random.Generator RollResult
-dieRoller =
-    Random.pair dieGenerator dieGenerator
-
-
-dieGenerator : Random.Generator DieFace
-dieGenerator =
-    Random.uniform Yek
-        [ Du
-        , Se
-        , Jhar
-        , Panj
-        , Shesh
-        ]
 
 
 
 -- VIEW
 
 
-displayBenzinoScene : { a | balance : Money, gameState : GameState } -> Element.Element Msg
-displayBenzinoScene { balance, gameState } =
+displayBenzinoScene : { a | balance : Balance, round : RoundState } -> Element.Element Msg
+displayBenzinoScene { balance, round } =
     let
         balanceDisplay =
-            Element.text ("Balance: " ++ toString balance)
+            case balance of
+                Balance b ->
+                    Element.text ("Balance: " ++ toString b)
 
         rollResultsDisplay =
-            case gameState of
-                Staked _ ->
+            case round of
+                Initiated ->
                     Element.text "Rolling..."
 
                 Resolved ( rolledA, rolledB ) _ ->
@@ -178,7 +115,7 @@ displayBenzinoScene { balance, gameState } =
                 , Element.padding 8
                 ]
                 { label = Element.text "Roll for 1000"
-                , onPress = Just (PlayerBets 1000)
+                , onPress = Just (PlayerWantsToBet 1000)
                 }
     in
     Element.column []
@@ -194,25 +131,3 @@ view : Model -> Html Msg
 view model =
     Element.layout [ Element.padding 50 ]
         (displayBenzinoScene model)
-
-
-pictogramFor : DieFace -> String
-pictogramFor dieFace =
-    case dieFace of
-        Yek ->
-            "⚀"
-
-        Du ->
-            "⚁"
-
-        Se ->
-            "⚂"
-
-        Jhar ->
-            "⚃"
-
-        Panj ->
-            "⚄"
-
-        Shesh ->
-            "⚅"
