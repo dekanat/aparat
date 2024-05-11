@@ -4,7 +4,6 @@ import Aparat exposing (DeterminedEvent)
 import Balance exposing (Balance(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
-import Fuzz exposing (int)
 import Random exposing (Seed, initialSeed)
 import Test exposing (..)
 
@@ -33,7 +32,7 @@ play amountToBet { seed, history, account } =
                 applyToWorld ( event, nextSeed ) =
                     WorldState
                         (event :: history)
-                        (Balance.topUp event.payout balanceAfterBet)
+                        (balanceAfterBet |> Balance.topUp event.payout)
                         nextSeed
             in
             amountToBet
@@ -44,11 +43,6 @@ play amountToBet { seed, history, account } =
         |> Balance.take amountToBet
         |> Result.map playSafe
         |> Result.mapError (\_ -> BalanceProblem)
-
-
-type StrategyEffect
-    = Win Money
-    | Lose Money
 
 
 autoplaySafeUntil : Money -> Money -> WorldState -> WorldState
@@ -75,55 +69,44 @@ autoplaySafeUntil desiredBalance betAmount initialWorld =
 compoundTest : Test
 compoundTest =
     describe "Game"
-        [ describe "Single Round"
+        [ describe "Continous sessions"
             [ let
-                concludeSession { initialBalance, desiredBalance, bet } seed =
+                randomSession { initialBalance, desiredBalance, bet } seed =
                     WorldState [] (Balance initialBalance) seed
                         |> autoplaySafeUntil desiredBalance bet
-
-                accumulateWhenOver : Money -> WorldState -> Stats -> Stats
-                accumulateWhenOver threshold { account } earlierStats =
-                    if Balance.toMoney account < threshold then
-                        { earlierStats | lost = earlierStats.lost + 1 }
-
-                    else
-                        { earlierStats | won = earlierStats.won + 1 }
               in
-              fuzz int "player may win or lose while sufficient funds" <|
-                \salt ->
+              test "player may win or lose before doubling wealth" <|
+                \() ->
                     let
-                        seed =
-                            initialSeed salt
-
-                        ( seedsForIndependentSessions, _ ) =
-                            Random.step (Random.list 100 Random.independentSeed) seed
+                        seedsForIndependentSessions =
+                            List.range 1 100
+                                |> List.map initialSeed
 
                         independentSessions =
                             seedsForIndependentSessions
                                 |> List.map
-                                    (concludeSession
+                                    (randomSession
                                         { initialBalance = 1000
                                         , desiredBalance = 2000
                                         , bet = 100
                                         }
                                     )
 
-                        stats =
-                            independentSessions
-                                |> List.foldl
-                                    (accumulateWhenOver 2000)
-                                    { won = 0, lost = 0 }
+                        playerWinsOver : Money -> WorldState -> Int -> Int
+                        playerWinsOver desiredBalance { account } count =
+                            if Balance.toMoney account > desiredBalance then
+                                count + 1
+
+                            else
+                                count
                     in
-                    stats
+                    independentSessions
                         |> Expect.all
-                            [ .won >> Expect.atLeast 35
-                            , .lost >> Expect.atLeast 35
+                            [ List.foldl (playerWinsOver 1000) 0
+                                >> Expect.all [ Expect.atLeast 25, Expect.atMost 75 ]
+                            , List.map (.history >> List.length)
+                                >> (List.minimum >> Maybe.withDefault 0)
+                                >> Expect.atLeast 2
                             ]
             ]
         ]
-
-
-type alias Stats =
-    { won : Int
-    , lost : Int
-    }
