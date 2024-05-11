@@ -1,6 +1,6 @@
 module AparatTests exposing (..)
 
-import Aparat exposing (playRound, resolvePayout)
+import Aparat exposing (determinPayout, resolveOutcome)
 import Common.Die exposing (Face(..))
 import Debug exposing (toString)
 import Expect exposing (..)
@@ -15,20 +15,14 @@ aparatTests =
     describe "Aparat"
         [ describe "Round"
             [ fuzz2 int int "should pay based on roll outcome" <|
-                \salt amountToBet ->
+                \salt bet ->
                     let
-                        currentSeed =
+                        ( event, _ ) =
                             initialSeed salt
-
-                        ( result, _ ) =
-                            amountToBet
-                                |> playRound currentSeed
-
-                        expectedPayoutFor =
-                            resolvePayout amountToBet
+                                |> resolveOutcome bet
                     in
-                    result.payout
-                        |> Expect.equal (expectedPayoutFor result.roll)
+                    event.payout
+                        |> Expect.equal (determinPayout bet event.roll)
             , fuzz int "should vary outcome like a normal die" <|
                 \salt ->
                     let
@@ -41,7 +35,7 @@ aparatTests =
                         itr _ ( previousOutcomes, seed ) =
                             let
                                 ( { roll }, nextSeed ) =
-                                    playRound seed fixedBet
+                                    resolveOutcome fixedBet seed
                             in
                             ( roll :: previousOutcomes, nextSeed )
 
@@ -59,11 +53,11 @@ aparatTests =
         , describe "Determine Payout"
             [ test "that apprat notifies of wins" <|
                 \() ->
-                    Aparat.resolvePayout 100 ( Panj, Panj )
+                    Aparat.determinPayout 100 ( Panj, Panj )
                         |> Expect.equal 600
             , test "that apprat notifies of lose" <|
                 \() ->
-                    Aparat.resolvePayout 100 ( Panj, Yek )
+                    Aparat.determinPayout 100 ( Panj, Yek )
                         |> Expect.equal 0
             ]
         ]

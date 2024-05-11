@@ -1,6 +1,5 @@
 module Aparat exposing (..)
 
-import Benzino exposing (RollOutcome)
 import Common.Die exposing (Face, rollingDie)
 import Common.Money exposing (Money)
 import Random exposing (Seed)
@@ -10,8 +9,8 @@ type alias DiceRoll =
     ( Face, Face )
 
 
-resolvePayout : Money -> DiceRoll -> Money
-resolvePayout betAmount ( rolledA, rolledB ) =
+determinPayout : Money -> DiceRoll -> Money
+determinPayout betAmount ( rolledA, rolledB ) =
     if rolledA == rolledB then
         betAmount * 6
 
@@ -27,27 +26,22 @@ type alias DeterminedEvent =
     }
 
 
-playRound : Seed -> Money -> ( DeterminedEvent, Seed )
-playRound seed bet =
+type alias RandomOutcome =
+    ( DeterminedEvent, Seed )
+
+
+resolveOutcome : Money -> Seed -> ( DeterminedEvent, Seed )
+resolveOutcome bet seed =
     let
-        resolveEvent : RollOutcome -> DeterminedEvent
+        resolveEvent : DiceRoll -> DeterminedEvent
         resolveEvent roll =
             roll
-                |> resolvePayout bet
+                |> determinPayout bet
                 |> DeterminedEvent seed bet roll
     in
     seed
         |> Random.step rollingPairOfDice
         |> Tuple.mapFirst resolveEvent
-
-
-type alias RandomOutcome =
-    ( DeterminedEvent, Seed )
-
-
-determineOutcome : Money -> Seed -> ( DeterminedEvent, Seed )
-determineOutcome bet seed =
-    playRound seed bet
 
 
 rollingPairOfDice : Random.Generator DiceRoll

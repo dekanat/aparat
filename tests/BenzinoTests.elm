@@ -1,41 +1,82 @@
 module BenzinoTests exposing (..)
 
-import Balance exposing (Balance(..))
-import Benzino exposing (Bet(..), RoundOutcome(..), makeBet)
+import Account exposing (Account(..), AccountingProblem(..))
+import Benzino exposing (..)
 import Common.Die exposing (Face(..))
+import Common.Money exposing (Money)
 import Expect exposing (..)
+import Random exposing (initialSeed)
 import Result exposing (..)
 import Test exposing (..)
 
 
-betTests : Test
-betTests =
-    describe "makeBet"
-        [ test "successfully makes a bet" <|
-            \() ->
-                Balance 1000
-                    |> makeBet 100
-                    |> Expect.equal
-                        (Ok
-                            ( Bet 100
-                            , Balance 900
-                            )
-                        )
-        , test "fails to make a over-the-budget bets" <|
-            \() ->
-                Balance 1300
-                    |> makeBet 1500
-                    |> Expect.err
+autoplaySafeUntil : Money -> Money -> SessionContext -> SessionContext
+autoplaySafeUntil desiredBalance betAmount initialWorld =
+    let
+        isGoodEnough session =
+            case session of
+                SettledSession { account } _ ->
+                    account |> Account.hasAtLeast desiredBalance
+
+        loop currentWorld =
+            case currentWorld |> Benzino.playOnce betAmount of
+                Ok newWorld ->
+                    if isGoodEnough newWorld then
+                        newWorld
+
+                    else
+                        loop newWorld
+
+                Err _ ->
+                    currentWorld
+    in
+    initialWorld |> loop
+
+
+compoundTest : Test
+compoundTest =
+    describe "Game"
+        [ describe "Continous sessions"
+            [ let
+                randomSession { initialBalance, desiredBalance, bet } seed =
+                    SettledSession
+                        { history = []
+                        , account = Account initialBalance
+                        }
+                        seed
+                        |> autoplaySafeUntil desiredBalance bet
+
+                extractAggregates session =
+                    case session of
+                        SettledSession aggregates _ ->
+                            aggregates
+              in
+              test "player may win or lose before doubling wealth" <|
+                \() ->
+                    let
+                        seedsForIndependentSessions =
+                            List.range 1 100
+                                |> List.map initialSeed
+
+                        independentSessions =
+                            seedsForIndependentSessions
+                                |> List.map
+                                    (randomSession
+                                        { initialBalance = 1000
+                                        , desiredBalance = 2000
+                                        , bet = 100
+                                        }
+                                    )
+                                |> List.map extractAggregates
+                    in
+                    independentSessions
+                        |> Expect.all
+                            [ List.filter (.account >> Account.hasAtLeast 1000)
+                                >> List.length
+                                >> Expect.all [ Expect.atLeast 25, Expect.atMost 75 ]
+                            , List.map (.history >> List.length)
+                                >> (List.minimum >> Maybe.withDefault 0)
+                                >> Expect.atLeast 2
+                            ]
+            ]
         ]
-
-
-
--- payoutTests : Test
--- payoutTests =
---     describe "Player Wins"
---         [ test "When both dice are the same" <|
---             \() ->
---                 Bet 1000
---                     |> Benzino.determinePayout ( Yek, Yek )
---                     |> Expect.equal (ReturnToPlayer 6000)
---         ]

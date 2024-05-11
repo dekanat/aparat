@@ -1,8 +1,8 @@
 module Main exposing (..)
 
 import Account exposing (Account(..))
-import Aparat exposing (DeterminedEvent, RandomOutcome)
-import Benzino exposing (RollOutcome, RoundOutcome(..), RoundState(..), rollingPairOfDice)
+import Aparat exposing (DeterminedEvent)
+import Benzino exposing (SessionContext(..))
 import Browser
 import Common.Die exposing (Face(..), pictogramFor)
 import Common.Money exposing (Money)
@@ -21,7 +21,7 @@ import Random
 
 main =
     Browser.element
-        { init = init
+        { init = initContext
         , update = update
         , subscriptions = \_ -> Sub.none
         , view = view
@@ -33,120 +33,44 @@ main =
 
 
 type alias Model =
-    { account : Account
-    , round : RoundState
-    }
-
-
-type alias Bet =
-    Money
-
-
-type alias SessionAggregates =
-    { history : List DeterminedEvent
-    , account : Account
-    }
-
-
-type SessionContext
-    = SettledSession SessionAggregates Random.Seed
-
-
-initContext : () -> ( SessionContext, Cmd Msg )
-initContext _ =
-    ( SettledSession
-        { history = []
-        , account = Account 3000
-        }
-        (Random.initialSeed 1)
-    , Cmd.none
-    )
-
-
-type SessionProblem
-    = NonRecoverable
-
-
-playOnce : Money -> SessionContext -> Result SessionProblem SessionContext
-playOnce amountToBet session =
-    case session of
-        SettledSession aggregates seed ->
-            let
-                resolveBet : Bet -> Account -> SessionContext
-                resolveBet betAmount accountAfterBet =
-                    let
-                        settleWithOutcome : RandomOutcome -> SessionContext
-                        settleWithOutcome ( event, nextSeed ) =
-                            SettledSession
-                                (SessionAggregates
-                                    (event :: aggregates.history)
-                                    (accountAfterBet |> Account.add event.payout)
-                                )
-                                nextSeed
-                    in
-                    seed
-                        |> Aparat.determineOutcome betAmount
-                        |> settleWithOutcome
-            in
-            aggregates.account
-                |> Account.deduct amountToBet
-                |> Result.mapError (\_ -> NonRecoverable)
-                |> Result.map (resolveBet amountToBet)
-
-
-
--- seed
---     |> Aparat.determineOutcome bet
+    SessionContext
 
 
 type Msg
     = PlayerWantsToBet Money
-    | RoundResolves Money RollOutcome
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg { account, round } =
+update msg session =
     case msg of
         PlayerWantsToBet moneyToBet ->
-            case Account.deduct moneyToBet account of
-                Ok remainingBalance ->
-                    ( { account = remainingBalance
-                      , round = Initiated
-                      }
-                    , Random.generate (RoundResolves moneyToBet) rollingPairOfDice
+            case Benzino.playOnce moneyToBet session of
+                Ok ctx ->
+                    ( ctx
+                    , Cmd.none
                     )
 
                 Err _ ->
-                    ( { account = account, round = round }, Cmd.none )
-
-        RoundResolves betAmount settledCombination ->
-            let
-                payout =
-                    Aparat.resolvePayout betAmount settledCombination
-
-                newState =
-                    { account = Account.add payout account
-                    , round = Resolved settledCombination payout
-                    }
-            in
-            ( newState, Cmd.none )
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { account = Account 3000
-      , round = Resolved ( Yek, Du ) 0
-      }
-    , Cmd.none
-    )
+                    ( session, Cmd.none )
 
 
 
 -- VIEW
 
 
-displayBenzinoScene : { a | account : Account, round : RoundState } -> Element.Element Msg
-displayBenzinoScene { account, round } =
+initContext : () -> ( SessionContext, Cmd Msg )
+initContext _ =
+    ( SettledSession
+        { history = []
+        , account = Account 2999
+        }
+        (Random.initialSeed 0)
+    , Cmd.none
+    )
+
+
+displayBenzinoScene : { a | account : Account, history : List DeterminedEvent } -> Element.Element Msg
+displayBenzinoScene { account, history } =
     let
         balanceDisplay =
             case account of
@@ -154,16 +78,16 @@ displayBenzinoScene { account, round } =
                     Element.text ("Account Balance: " ++ toString b)
 
         rollResultsDisplay =
-            case round of
-                Initiated ->
+            case List.head history of
+                Nothing ->
                     Element.text "Rolling..."
 
-                Resolved ( rolledA, rolledB ) _ ->
+                Just { roll } ->
                     Element.row
                         [ Element.Font.size 200
                         ]
-                        [ Element.text (pictogramFor rolledA)
-                        , Element.text (pictogramFor rolledB)
+                        [ Element.text (pictogramFor (Tuple.first roll))
+                        , Element.text (pictogramFor (Tuple.second roll))
                         ]
 
         rollTrigger =
@@ -189,4 +113,7 @@ displayBenzinoScene { account, round } =
 view : Model -> Html Msg
 view model =
     Element.layout [ Element.padding 50 ]
-        (displayBenzinoScene model)
+        (case model of
+            SettledSession aggregates _ ->
+                displayBenzinoScene aggregates
+        )
