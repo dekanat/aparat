@@ -14,7 +14,7 @@ balanceTests =
         [ describe "topUp"
             [ test "should increas balance correctly" <|
                 \() ->
-                    Balance.topUp (Balance 1000) 1000
+                    Balance.topUp2 (Balance 1000) 1000
                         |> Expect.equal (Balance 2000)
             ]
         , describe "takeFrom"

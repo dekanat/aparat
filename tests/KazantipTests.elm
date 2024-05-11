@@ -1,29 +1,22 @@
 module KazantipTests exposing (..)
 
-import Aparat exposing (DeterminedEvent, DiceRoll)
+import Aparat exposing (DeterminedEvent)
 import Balance exposing (Balance(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import Fuzz exposing (int)
-import Player
 import Random exposing (Seed, initialSeed)
 import Test exposing (..)
 
 
-type alias PlayerModel =
-    { balance : Balance
-    }
-
-
-type alias AparatModel =
-    { seed : Seed
-    , history : List DeterminedEvent
-    }
+type alias PlayerAccount =
+    Balance
 
 
 type alias WorldState =
-    { player : PlayerModel
-    , aparat : AparatModel
+    { history : List DeterminedEvent
+    , account : PlayerAccount
+    , seed : Seed
     }
 
 
@@ -32,92 +25,105 @@ type PlayingProblem
 
 
 play : Money -> WorldState -> Result PlayingProblem WorldState
-play amountToBet { player, aparat } =
+play amountToBet { seed, history, account } =
     let
-        playRound : Seed -> Money -> ( DeterminedEvent, Seed )
-        playRound seed bet =
+        playSafe : PlayerAccount -> WorldState
+        playSafe balanceAfterBet =
             let
-                resolveEvent : DiceRoll -> DeterminedEvent
-                resolveEvent roll =
-                    roll
-                        |> Aparat.resolvePayout bet
-                        |> DeterminedEvent seed bet roll
-            in
-            seed
-                |> Random.step Aparat.rollingPairOfDice
-                |> Tuple.mapFirst resolveEvent
-
-        initiateRound : ( Money, Balance ) -> WorldState
-        initiateRound ( bet, balanceAfterBet ) =
-            let
-                resolveEvent : DiceRoll -> DeterminedEvent
-                resolveEvent roll =
-                    roll
-                        |> Aparat.resolvePayout bet
-                        |> DeterminedEvent aparat.seed bet roll
-
-                playerAfter ( event, _ ) =
-                    PlayerModel
-                        (Balance.topUp balanceAfterBet event.payout)
-
-                aparatAfter ( event, nextSeed ) =
-                    AparatModel
+                applyToWorld ( event, nextSeed ) =
+                    WorldState
+                        (event :: history)
+                        (Balance.topUp event.payout balanceAfterBet)
                         nextSeed
-                        (event :: aparat.history)
             in
-            aparat.seed
-                |> Random.step Aparat.rollingPairOfDice
-                |> Tuple.mapFirst resolveEvent
-                |> (\resolution ->
-                        WorldState
-                            (playerAfter resolution)
-                            (aparatAfter resolution)
-                   )
+            amountToBet
+                |> Aparat.playRound seed
+                |> applyToWorld
     in
-    player.balance
-        |> Player.makeBet amountToBet
-        |> Result.map initiateRound
+    account
+        |> Balance.take amountToBet
+        |> Result.map playSafe
         |> Result.mapError (\_ -> BalanceProblem)
+
+
+type StrategyEffect
+    = Win Money
+    | Lose Money
+
+
+autoplaySafeUntil : Money -> Money -> WorldState -> WorldState
+autoplaySafeUntil desiredBalance betAmount initialWorld =
+    let
+        isGoodEnough newWorldOrder =
+            Balance.toMoney newWorldOrder.account >= desiredBalance
+
+        loop currentWorld =
+            case currentWorld |> play betAmount of
+                Ok newWorld ->
+                    if isGoodEnough newWorld then
+                        newWorld
+
+                    else
+                        loop newWorld
+
+                Err _ ->
+                    currentWorld
+    in
+    initialWorld |> loop
 
 
 compoundTest : Test
 compoundTest =
     describe "Game"
         [ describe "Single Round"
-            [ fuzz int "player may win or lose while sufficient funds" <|
+            [ let
+                concludeSession { initialBalance, desiredBalance, bet } seed =
+                    WorldState [] (Balance initialBalance) seed
+                        |> autoplaySafeUntil desiredBalance bet
+
+                accumulateWhenOver : Money -> WorldState -> Stats -> Stats
+                accumulateWhenOver threshold { account } earlierStats =
+                    if Balance.toMoney account < threshold then
+                        { earlierStats | lost = earlierStats.lost + 1 }
+
+                    else
+                        { earlierStats | won = earlierStats.won + 1 }
+              in
+              fuzz int "player may win or lose while sufficient funds" <|
                 \salt ->
                     let
-                        currentSeed =
+                        seed =
                             initialSeed salt
 
-                        initialWorld =
-                            WorldState
-                                (PlayerModel (Balance 3000))
-                                (AparatModel currentSeed [])
+                        ( seedsForIndependentSessions, _ ) =
+                            Random.step (Random.list 100 Random.independentSeed) seed
 
-                        playManyRounds : Int -> Money -> WorldState -> WorldState
-                        playManyRounds maxTimes amountToBet world =
-                            let
-                                loop moreTimes currentWorld =
-                                    case currentWorld |> play amountToBet of
-                                        Ok newWorld ->
-                                            if moreTimes > 0 then
-                                                loop (moreTimes - 1) newWorld
+                        independentSessions =
+                            seedsForIndependentSessions
+                                |> List.map
+                                    (concludeSession
+                                        { initialBalance = 1000
+                                        , desiredBalance = 2000
+                                        , bet = 100
+                                        }
+                                    )
 
-                                            else
-                                                currentWorld
-
-                                        Err _ ->
-                                            currentWorld
-                            in
-                            world |> loop maxTimes
+                        stats =
+                            independentSessions
+                                |> List.foldl
+                                    (accumulateWhenOver 2000)
+                                    { won = 0, lost = 0 }
                     in
-                    initialWorld
-                        |> playManyRounds 100 100
+                    stats
                         |> Expect.all
-                            [ (.aparat >> .history) >> List.length >> Expect.atMost 100
-
-                            -- , (.player >> .balance) >> Expect.equal (Balance 0)
+                            [ .won >> Expect.atLeast 35
+                            , .lost >> Expect.atLeast 35
                             ]
             ]
         ]
+
+
+type alias Stats =
+    { won : Int
+    , lost : Int
+    }

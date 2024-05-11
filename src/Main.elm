@@ -66,7 +66,7 @@ update msg { balance, round } =
                 newState =
                     case afterEffecs of
                         ReturnToPlayer amount ->
-                            { balance = Balance.topUp balance amount
+                            { balance = Balance.topUp2 balance amount
                             , round = Resolved settledCombination afterEffecs
                             }
             in

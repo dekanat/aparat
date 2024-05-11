@@ -1,6 +1,6 @@
 module Player exposing (..)
 
-import Balance exposing (Balance(..), BalanceIssues(..), topUp)
+import Balance exposing (Balance(..), BalanceIssues(..), topUp2)
 import Common.Money exposing (Money)
 
 
@@ -16,4 +16,4 @@ makeBet amountToBet balance =
 
 roundUp : Money -> Balance -> Balance
 roundUp payout balance =
-    topUp balance payout
+    topUp2 balance payout

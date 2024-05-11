@@ -7,11 +7,22 @@ type Balance
     = Balance Money
 
 
-topUp : Balance -> Money -> Balance
-topUp currentBalance amountToAdd =
+topUp2 : Balance -> Money -> Balance
+topUp2 currentBalance amountToAdd =
     case currentBalance of
         Balance availableAmount ->
             Balance (availableAmount + amountToAdd)
+
+
+topUp a b =
+    topUp2 b a
+
+
+toMoney : Balance -> Money
+toMoney balance =
+    case balance of
+        Balance amount ->
+            amount
 
 
 type BalanceIssues
@@ -27,3 +38,7 @@ takeFrom initialBalance amountToTake =
 
             else
                 Err InsufficientBalance
+
+
+take a b =
+    takeFrom b a
