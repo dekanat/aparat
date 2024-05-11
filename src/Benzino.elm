@@ -11,7 +11,7 @@ type Bet
 
 
 type RoundOutcome
-    = ReturnToPlayer Money
+    = Money
 
 
 type alias RollOutcome =
@@ -20,7 +20,7 @@ type alias RollOutcome =
 
 type RoundState
     = Initiated
-    | Resolved RollOutcome RoundOutcome
+    | Resolved RollOutcome Money
 
 
 makeBet : Money -> Balance -> Result BalanceIssues ( Bet, Balance )
@@ -36,18 +36,3 @@ makeBet amountToBet balance =
 rollingPairOfDice : Random.Generator RollOutcome
 rollingPairOfDice =
     Random.pair rollingDie rollingDie
-
-
-determinePayout : RollOutcome -> Bet -> RoundOutcome
-determinePayout ( rolledA, rolledB ) bet =
-    case bet of
-        Bet amount ->
-            let
-                winScale =
-                    if rolledA == rolledB then
-                        6
-
-                    else
-                        0
-            in
-            ReturnToPlayer (amount * winScale)

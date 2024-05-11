@@ -29,12 +29,13 @@ betTests =
         ]
 
 
-payoutTests : Test
-payoutTests =
-    describe "Player Wins"
-        [ test "When both dice are the same" <|
-            \() ->
-                Bet 1000
-                    |> Benzino.determinePayout ( Yek, Yek )
-                    |> Expect.equal (ReturnToPlayer 6000)
-        ]
+
+-- payoutTests : Test
+-- payoutTests =
+--     describe "Player Wins"
+--         [ test "When both dice are the same" <|
+--             \() ->
+--                 Bet 1000
+--                     |> Benzino.determinePayout ( Yek, Yek )
+--                     |> Expect.equal (ReturnToPlayer 6000)
+--         ]

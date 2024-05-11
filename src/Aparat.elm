@@ -10,19 +10,13 @@ type alias DiceRoll =
     ( Face, Face )
 
 
-type alias Payout =
-    Money
+resolvePayout : Money -> DiceRoll -> Money
+resolvePayout betAmount ( rolledA, rolledB ) =
+    if rolledA == rolledB then
+        betAmount * 6
 
-
-resolvePayout : Money -> DiceRoll -> Payout
-resolvePayout amount settledOutcome =
-    case settledOutcome of
-        ( rolledA, rolledB ) ->
-            if rolledA == rolledB then
-                amount * 6
-
-            else
-                0
+    else
+        0
 
 
 type alias DeterminedEvent =
@@ -31,10 +25,6 @@ type alias DeterminedEvent =
     , roll : DiceRoll
     , payout : Money
     }
-
-
-type alias RandomOutcome =
-    ( DeterminedEvent, Seed )
 
 
 playRound : Seed -> Money -> ( DeterminedEvent, Seed )
@@ -49,6 +39,15 @@ playRound seed bet =
     seed
         |> Random.step rollingPairOfDice
         |> Tuple.mapFirst resolveEvent
+
+
+type alias RandomOutcome =
+    ( DeterminedEvent, Seed )
+
+
+determineOutcome : Money -> Seed -> ( DeterminedEvent, Seed )
+determineOutcome bet seed =
+    playRound seed bet
 
 
 rollingPairOfDice : Random.Generator DiceRoll
