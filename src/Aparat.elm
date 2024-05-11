@@ -33,6 +33,10 @@ type alias DeterminedEvent =
     }
 
 
+type alias RandomOutcome =
+    ( DeterminedEvent, Seed )
+
+
 playRound : Seed -> Money -> ( DeterminedEvent, Seed )
 playRound seed bet =
     let

@@ -1,6 +1,7 @@
 module KazantipTests exposing (..)
 
-import Aparat exposing (DeterminedEvent)
+import Account exposing (Account(..), AccountingProblem(..))
+import Aparat exposing (DeterminedEvent, RandomOutcome)
 import Balance exposing (Balance(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
@@ -8,48 +9,45 @@ import Random exposing (Seed, initialSeed)
 import Test exposing (..)
 
 
-type alias PlayerAccount =
-    Balance
-
-
-type alias WorldState =
+type alias SessionContext =
     { history : List DeterminedEvent
-    , account : PlayerAccount
+    , account : Account
     , seed : Seed
     }
 
 
-type PlayingProblem
-    = BalanceProblem
+type SessionProblem
+    = NonRecoverable
 
 
-play : Money -> WorldState -> Result PlayingProblem WorldState
+play : Money -> SessionContext -> Result SessionProblem SessionContext
 play amountToBet { seed, history, account } =
     let
-        playSafe : PlayerAccount -> WorldState
-        playSafe balanceAfterBet =
+        playSafe : Account -> SessionContext
+        playSafe safelyDeduced =
             let
-                applyToWorld ( event, nextSeed ) =
-                    WorldState
+                updateCurrentContext : RandomOutcome -> SessionContext
+                updateCurrentContext ( event, nextSeed ) =
+                    SessionContext
                         (event :: history)
-                        (balanceAfterBet |> Balance.topUp event.payout)
+                        (safelyDeduced |> Account.add event.payout)
                         nextSeed
             in
             amountToBet
                 |> Aparat.playRound seed
-                |> applyToWorld
+                |> updateCurrentContext
     in
     account
-        |> Balance.take amountToBet
+        |> Account.deduct amountToBet
         |> Result.map playSafe
-        |> Result.mapError (\_ -> BalanceProblem)
+        |> Result.mapError (\_ -> NonRecoverable)
 
 
-autoplaySafeUntil : Money -> Money -> WorldState -> WorldState
+autoplaySafeUntil : Money -> Money -> SessionContext -> SessionContext
 autoplaySafeUntil desiredBalance betAmount initialWorld =
     let
-        isGoodEnough newWorldOrder =
-            Balance.toMoney newWorldOrder.account >= desiredBalance
+        isGoodEnough =
+            .account >> Account.hasAtLeast desiredBalance
 
         loop currentWorld =
             case currentWorld |> play betAmount of
@@ -72,7 +70,7 @@ compoundTest =
         [ describe "Continous sessions"
             [ let
                 randomSession { initialBalance, desiredBalance, bet } seed =
-                    WorldState [] (Balance initialBalance) seed
+                    SessionContext [] (Account initialBalance) seed
                         |> autoplaySafeUntil desiredBalance bet
               in
               test "player may win or lose before doubling wealth" <|
@@ -91,18 +89,11 @@ compoundTest =
                                         , bet = 100
                                         }
                                     )
-
-                        playerWinsOver : Money -> WorldState -> Int -> Int
-                        playerWinsOver desiredBalance { account } count =
-                            if Balance.toMoney account > desiredBalance then
-                                count + 1
-
-                            else
-                                count
                     in
                     independentSessions
                         |> Expect.all
-                            [ List.foldl (playerWinsOver 1000) 0
+                            [ List.filter (.account >> Account.hasAtLeast 1000)
+                                >> List.length
                                 >> Expect.all [ Expect.atLeast 25, Expect.atMost 75 ]
                             , List.map (.history >> List.length)
                                 >> (List.minimum >> Maybe.withDefault 0)
