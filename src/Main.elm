@@ -3,7 +3,7 @@ module Main exposing (..)
 import Account exposing (Account(..))
 import Benzino exposing (DeterminedEvent, SessionContext(..))
 import Browser
-import Common.Die exposing (Face(..), pictogramFor)
+import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
 import Debug exposing (toString)
 import Element
@@ -61,11 +61,34 @@ initContext : () -> ( SessionContext, Cmd Msg )
 initContext _ =
     ( SettledSession
         { history = []
-        , account = Account 2999
+        , account = Account 3000
         }
         (Random.initialSeed 0)
     , Cmd.none
     )
+
+
+rollResultsDisplay : List DeterminedEvent -> Element.Element Msg
+rollResultsDisplay history =
+    let
+        xxlSize =
+            200
+
+        pictogramFor : ( Face, Face ) -> Element.Element Msg
+        pictogramFor ( rolledA, rolledB ) =
+            Element.row
+                [ Element.Font.size xxlSize
+                ]
+                [ Element.text (glyphFor rolledA)
+                , Element.text (glyphFor rolledB)
+                ]
+    in
+    case List.head history of
+        Nothing ->
+            pictogramFor ( Shesh, Yek )
+
+        Just { roll } ->
+            pictogramFor roll
 
 
 displayBenzinoScene : { a | account : Account, history : List DeterminedEvent } -> Element.Element Msg
@@ -73,21 +96,8 @@ displayBenzinoScene { account, history } =
     let
         balanceDisplay =
             case account of
-                Account b ->
-                    Element.text ("Account Balance: " ++ toString b)
-
-        rollResultsDisplay =
-            case List.head history of
-                Nothing ->
-                    Element.text "Rolling..."
-
-                Just { roll } ->
-                    Element.row
-                        [ Element.Font.size 200
-                        ]
-                        [ Element.text (pictogramFor (Tuple.first roll))
-                        , Element.text (pictogramFor (Tuple.second roll))
-                        ]
+                Account balance ->
+                    Element.text ("Account Balance: " ++ toString balance)
 
         rollTrigger =
             Element.Input.button
@@ -104,7 +114,7 @@ displayBenzinoScene { account, history } =
         [ Element.el
             [ Element.alignRight ]
             balanceDisplay
-        , rollResultsDisplay
+        , rollResultsDisplay history
         , rollTrigger
         ]
 
