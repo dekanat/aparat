@@ -121,34 +121,33 @@ displayBenzinoScene { account, history } =
         ]
 
 
-{-| Reduce a list from the left, building up all
-of the intermediate results into a list.
--}
-scanl : (a -> b -> b) -> b -> List a -> List b
-scanl fn b =
-    let
-        scan a bs =
-            case bs of
-                hd :: _ ->
-                    fn a hd :: bs
-
-                _ ->
-                    []
-    in
-    List.foldl scan [ b ] >> List.reverse
-
-
 statsChart : SessionAggregates -> Element.Element Msg
 statsChart { history, account } =
     let
-        datax =
-            history
-                |> List.reverse
+        reHistory =
+            List.reverse history
+
+        reAccounts =
+            reHistory
                 |> List.Extra.scanr
                     (\{ bet, payout } dirtyBalance ->
                         dirtyBalance + bet - payout
                     )
                     (Account.balanceOf account)
+
+        reAll =
+            List.Extra.zip reHistory reAccounts
+
+        scores =
+            reAll
+                |> List.indexedMap
+                    (\idx ( event, balance ) ->
+                        { idx = toFloat idx
+                        , bet = toFloat event.bet
+                        , payout = toFloat event.payout
+                        , balance = toFloat balance
+                        }
+                    )
 
         _ =
             history
@@ -160,25 +159,32 @@ statsChart { history, account } =
                         }
                     )
 
+        optimalHeight =
+            400
+
+        optimalWidth =
+            120 + (history |> List.length) * 12
+
         chart =
             C.chart
-                [ CA.height 300
-                , CA.width 300
+                [ CA.height optimalHeight
+                , CA.width (toFloat optimalWidth)
                 ]
-                [ C.xLabels [ CA.withGrid, CA.ints ]
+                [ C.xLabels []
                 , C.yLabels [ CA.withGrid ]
                 , C.bars
-                    [ CA.x1 .x, CA.ungroup ]
-                    [ C.bar .balance [ CA.striped [] ]
-                    , C.bar .balance [ CA.striped [] ]
+                    [ CA.x1 .idx, CA.ungroup ]
+                    [ C.stacked
+                        [ C.bar .payout [ CA.color CA.green ]
+                        , C.bar .balance [ CA.color CA.blue ]
+                        ]
+                    , C.bar (.bet >> (*) -1) [ CA.color CA.red ]
                     ]
-                    (datax
-                        |> List.indexedMap (\idx balance -> { x = toFloat idx, balance = toFloat balance })
-                    )
+                    scores
                 ]
     in
     Element.el
-        [ Element.width (Element.px 300)
+        [ Element.width (Element.px optimalWidth)
         , Element.padding 50
         ]
         (Element.html chart)
@@ -188,7 +194,8 @@ view : Model -> Html Msg
 view ( aggregates, _ ) =
     Html.div []
         [ Element.layout [ Element.padding 50 ]
-            (Element.row []
+            (Element.row
+                []
                 [ displayBenzinoScene aggregates
                 , statsChart aggregates
                 ]
