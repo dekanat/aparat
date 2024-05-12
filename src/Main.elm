@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Account exposing (Account(..))
-import Benzino exposing (DeterminedEvent, SessionContext(..))
+import Benzino exposing (DeterminedEvent, SessionContext)
 import Browser
 import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
@@ -10,7 +10,7 @@ import Element
 import Element.Border
 import Element.Font
 import Element.Input
-import History exposing (History)
+import History
 import Html exposing (Html)
 import Random
 
@@ -60,11 +60,11 @@ update msg session =
 
 initContext : () -> ( SessionContext, Cmd Msg )
 initContext _ =
-    ( SettledSession
-        { history = History.empty
+    ( ( { history = History.empty
         , account = Account 3000
         }
-        (Random.initialSeed 0)
+      , Random.initialSeed 0
+      )
     , Cmd.none
     )
 
@@ -121,9 +121,6 @@ displayBenzinoScene { account, history } =
 
 
 view : Model -> Html Msg
-view model =
+view ( aggregates, _ ) =
     Element.layout [ Element.padding 50 ]
-        (case model of
-            SettledSession aggregates _ ->
-                displayBenzinoScene aggregates
-        )
+        (displayBenzinoScene aggregates)

@@ -7,6 +7,7 @@ import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import Fuzz exposing (int)
+import History exposing (History)
 import Random exposing (initialSeed)
 import Result exposing (..)
 import Set
@@ -20,10 +21,8 @@ randomSession :
     -> SessionContext
 randomSession config seed =
     let
-        isGoodToExit session =
-            case session of
-                SettledSession { account } _ ->
-                    account |> Account.hasAtLeast config.desiredBalance
+        isGoodToExit ( { account }, _ ) =
+            account |> Account.hasAtLeast config.desiredBalance
 
         loop currentState =
             case Benzino.playOnce config.betAmount currentState of
@@ -38,25 +37,19 @@ randomSession config seed =
                     currentState
 
         commonStarterState =
-            { history = []
+            { history = History.empty
             , account = Account config.initialBalance
             }
     in
     loop
-        (SettledSession commonStarterState seed)
+        ( commonStarterState, seed )
 
 
 compoundTest : Test
 compoundTest =
     describe "Game"
         [ describe "Continous sessions"
-            [ let
-                extractAggregates session =
-                    case session of
-                        SettledSession aggregates _ ->
-                            aggregates
-              in
-              test "player may win or lose before doubling wealth" <|
+            [ test "player may win or lose before doubling wealth" <|
                 \() ->
                     let
                         manySessions =
@@ -72,7 +65,7 @@ compoundTest =
                             manySessions
                                 |> (List.range 1 >> List.map initialSeed)
                                 |> List.map (randomSession fixedSettings)
-                                |> List.map extractAggregates
+                                |> List.map Tuple.first
                     in
                     -- TODO: imi bereq mi hat
                     independentSessions

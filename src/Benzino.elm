@@ -17,8 +17,8 @@ type alias SessionAggregates =
     }
 
 
-type SessionContext
-    = SettledSession SessionAggregates Random.Seed
+type alias SessionContext =
+    ( SessionAggregates, Random.Seed )
 
 
 type SessionProblem
@@ -26,30 +26,25 @@ type SessionProblem
 
 
 playOnce : Money -> SessionContext -> Result SessionProblem SessionContext
-playOnce amountToBet session =
-    case session of
-        SettledSession aggregates seed ->
+playOnce amountToBet ( aggregates, seed ) =
+    let
+        resolveBet : Bet -> Account -> SessionContext
+        resolveBet betAmount accountAfterBet =
             let
-                resolveBet : Bet -> Account -> SessionContext
-                resolveBet betAmount accountAfterBet =
-                    let
-                        settleWithOutcome : RandomOutcome -> SessionContext
-                        settleWithOutcome ( event, nextSeed ) =
-                            SettledSession
-                                (SessionAggregates
-                                    (aggregates.history |> History.add event)
-                                    (accountAfterBet |> Account.add event.payout)
-                                )
-                                nextSeed
-                    in
-                    seed
-                        |> generateOutcome betAmount
-                        |> settleWithOutcome
+                settleAggregates : DeterminedEvent -> SessionAggregates
+                settleAggregates event =
+                    SessionAggregates
+                        (aggregates.history |> History.add event)
+                        (accountAfterBet |> Account.add event.payout)
             in
-            aggregates.account
-                |> Account.deduct amountToBet
-                |> Result.mapError (\_ -> NonRecoverable)
-                |> Result.map (resolveBet amountToBet)
+            seed
+                |> generateOutcome betAmount
+                |> Tuple.mapFirst settleAggregates
+    in
+    aggregates.account
+        |> Account.deduct amountToBet
+        |> Result.mapError (\_ -> NonRecoverable)
+        |> Result.map (resolveBet amountToBet)
 
 
 type alias DeterminedEvent =
