@@ -34,3 +34,10 @@ hasAtLeast amount account =
     case account of
         Account balance ->
             balance >= amount
+
+
+balanceOf : Account -> Money
+balanceOf account =
+    case account of
+        Account balance ->
+            balance

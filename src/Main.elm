@@ -1,8 +1,10 @@
 module Main exposing (..)
 
 import Account exposing (Account(..))
-import Benzino exposing (DeterminedEvent, SessionContext)
+import Benzino exposing (DeterminedEvent, SessionAggregates, SessionContext)
 import Browser
+import Chart as C
+import Chart.Attributes as CA
 import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
 import Debug exposing (toString)
@@ -12,6 +14,7 @@ import Element.Font
 import Element.Input
 import History
 import Html exposing (Html)
+import List.Extra
 import Random
 
 
@@ -96,9 +99,7 @@ displayBenzinoScene : { a | account : Account, history : List DeterminedEvent } 
 displayBenzinoScene { account, history } =
     let
         balanceDisplay =
-            case account of
-                Account balance ->
-                    Element.text ("Account Balance: " ++ toString balance)
+            Element.text ("Account Balance: " ++ toString (Account.balanceOf account))
 
         rollTrigger =
             Element.Input.button
@@ -120,7 +121,76 @@ displayBenzinoScene { account, history } =
         ]
 
 
+{-| Reduce a list from the left, building up all
+of the intermediate results into a list.
+-}
+scanl : (a -> b -> b) -> b -> List a -> List b
+scanl fn b =
+    let
+        scan a bs =
+            case bs of
+                hd :: _ ->
+                    fn a hd :: bs
+
+                _ ->
+                    []
+    in
+    List.foldl scan [ b ] >> List.reverse
+
+
+statsChart : SessionAggregates -> Element.Element Msg
+statsChart { history, account } =
+    let
+        datax =
+            history
+                |> List.reverse
+                |> List.Extra.scanr
+                    (\{ bet, payout } dirtyBalance ->
+                        dirtyBalance + bet - payout
+                    )
+                    (Account.balanceOf account)
+
+        _ =
+            history
+                |> List.indexedMap
+                    (\idx { bet, payout } ->
+                        { x = toFloat idx
+                        , bet = toFloat -bet
+                        , payout = toFloat payout
+                        }
+                    )
+
+        chart =
+            C.chart
+                [ CA.height 300
+                , CA.width 300
+                ]
+                [ C.xLabels [ CA.withGrid, CA.ints ]
+                , C.yLabels [ CA.withGrid ]
+                , C.bars
+                    [ CA.x1 .x, CA.ungroup ]
+                    [ C.bar .balance [ CA.striped [] ]
+                    , C.bar .balance [ CA.striped [] ]
+                    ]
+                    (datax
+                        |> List.indexedMap (\idx balance -> { x = toFloat idx, balance = toFloat balance })
+                    )
+                ]
+    in
+    Element.el
+        [ Element.width (Element.px 300)
+        , Element.padding 50
+        ]
+        (Element.html chart)
+
+
 view : Model -> Html Msg
 view ( aggregates, _ ) =
-    Element.layout [ Element.padding 50 ]
-        (displayBenzinoScene aggregates)
+    Html.div []
+        [ Element.layout [ Element.padding 50 ]
+            (Element.row []
+                [ displayBenzinoScene aggregates
+                , statsChart aggregates
+                ]
+            )
+        ]

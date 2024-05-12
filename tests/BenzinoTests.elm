@@ -7,7 +7,7 @@ import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import Fuzz exposing (int)
-import History exposing (History)
+import History
 import Random exposing (initialSeed)
 import Result exposing (..)
 import Set
