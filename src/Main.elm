@@ -149,16 +149,6 @@ statsChart { history, account } =
                         }
                     )
 
-        _ =
-            history
-                |> List.indexedMap
-                    (\idx { bet, payout } ->
-                        { x = toFloat idx
-                        , bet = toFloat -bet
-                        , payout = toFloat payout
-                        }
-                    )
-
         optimalHeight =
             400
 
@@ -172,13 +162,16 @@ statsChart { history, account } =
                 ]
                 [ C.xLabels []
                 , C.yLabels [ CA.withGrid ]
+                , C.series .idx
+                    [ C.interpolated .balance
+                        [ CA.stepped, CA.opacity 0.2 ]
+                        [ CA.borderWidth 2, CA.border "white" ]
+                    ]
+                    scores
                 , C.bars
-                    [ CA.x1 .idx, CA.ungroup ]
-                    [ C.stacked
-                        [ C.bar .payout [ CA.color CA.green ]
-                        , C.bar .balance [ CA.color CA.blue ]
-                        ]
-                    , C.bar (.bet >> (*) -1) [ CA.color CA.red ]
+                    [ CA.x1 .idx ]
+                    [ C.bar .bet []
+                    , C.bar .payout []
                     ]
                     scores
                 ]
