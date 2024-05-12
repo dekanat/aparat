@@ -10,6 +10,7 @@ import Element
 import Element.Border
 import Element.Font
 import Element.Input
+import History exposing (History)
 import Html exposing (Html)
 import Random
 
@@ -60,7 +61,7 @@ update msg session =
 initContext : () -> ( SessionContext, Cmd Msg )
 initContext _ =
     ( SettledSession
-        { history = []
+        { history = History.empty
         , account = Account 3000
         }
         (Random.initialSeed 0)
@@ -83,7 +84,7 @@ rollResultsDisplay history =
                 , Element.text (glyphFor rolledB)
                 ]
     in
-    case List.head history of
+    case History.last history of
         Nothing ->
             pictogramFor ( Shesh, Yek )
 

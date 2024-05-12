@@ -3,6 +3,7 @@ module Benzino exposing (..)
 import Account exposing (Account(..))
 import Aparat exposing (DiceRoll)
 import Common.Money exposing (Money)
+import History exposing (History)
 import Random
 
 
@@ -11,7 +12,7 @@ type alias Bet =
 
 
 type alias SessionAggregates =
-    { history : List DeterminedEvent
+    { history : History DeterminedEvent
     , account : Account
     }
 
@@ -36,7 +37,7 @@ playOnce amountToBet session =
                         settleWithOutcome ( event, nextSeed ) =
                             SettledSession
                                 (SessionAggregates
-                                    (event :: aggregates.history)
+                                    (aggregates.history |> History.add event)
                                     (accountAfterBet |> Account.add event.payout)
                                 )
                                 nextSeed
