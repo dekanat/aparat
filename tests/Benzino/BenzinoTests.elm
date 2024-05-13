@@ -1,4 +1,4 @@
-module BenzinoTests exposing (..)
+module Benzino.BenzinoTests exposing (..)
 
 import Account exposing (Account(..), AccountingProblem(..))
 import Benzino exposing (..)

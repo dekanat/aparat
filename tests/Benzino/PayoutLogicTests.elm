@@ -1,4 +1,4 @@
-module AparatTests exposing (..)
+module Benzino.PayoutLogicTests exposing (..)
 
 import Aparat
 import Common.Die exposing (Face(..))
@@ -13,11 +13,11 @@ aparatTests =
         [ describe "Determine Payout"
             [ test "that apprat notifies of wins" <|
                 \() ->
-                    Aparat.determinPayout 100 ( Panj, Panj )
+                    Aparat.calculatePayout 100 ( Panj, Panj )
                         |> Expect.equal 600
             , test "that apprat notifies of lose" <|
                 \() ->
-                    Aparat.determinPayout 100 ( Panj, Yek )
+                    Aparat.calculatePayout 100 ( Panj, Yek )
                         |> Expect.equal 0
             ]
         ]

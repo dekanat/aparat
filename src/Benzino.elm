@@ -20,7 +20,7 @@ playOnce amountToBet ( aggregates, seed ) =
                 determineOutcome : DiceRoll -> DeterminedEvent DiceRoll
                 determineOutcome roll =
                     roll
-                        |> Aparat.determinPayout amountToBet
+                        |> Aparat.calculatePayout amountToBet
                         |> DeterminedEvent seed roll amountToBet
 
                 evolveState : DeterminedEvent DiceRoll -> SessionState DiceRoll
