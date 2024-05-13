@@ -18,7 +18,7 @@ type alias History e =
 
 add : DeterminedEvent e -> History e -> History e
 add event history =
-    event :: history
+    history ++ [ event ]
 
 
 last : History e -> Maybe (DeterminedEvent e)
