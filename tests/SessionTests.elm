@@ -6,6 +6,7 @@ import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History exposing (DeterminedEvent)
+import List.Extra
 import Random exposing (initialSeed)
 import Session exposing (SessionState)
 import Test exposing (..)
@@ -37,8 +38,8 @@ sessionOperations =
                         { history =
                             History.empty
                                 |> History.add (stubLoseNo 1)
-                                |> History.add (stubLoseNo 3)
-                                |> History.add (stubWinNo 2)
+                                |> History.add (stubLoseNo 2)
+                                |> History.add (stubWinNo 3)
                         , account = Account 6000
                         }
 
@@ -46,7 +47,15 @@ sessionOperations =
                     replay mapper { account, history } =
                         let
                             balance =
-                                1000
+                                6000
+
+                            balanceFlowBeforeBets =
+                                history
+                                    |> List.Extra.scanl
+                                        (\event balanceAfterEvent ->
+                                            balanceAfterEvent - event.payout + event.bet
+                                        )
+                                        balance
 
                             applyMapper : DeterminedEvent a -> b
                             applyMapper event =
@@ -61,8 +70,14 @@ sessionOperations =
                                 [ replay (\( _, event ) -> event.payout > 0)
                                     >> Expect.equalLists [ False, False, True ]
                                 , replay (\( balanceDuringEvent, event ) -> balanceDuringEvent + event.bet)
-                                    >> Expect.equalLists [ 3000, 2000, 7000 ]
+                                    >> Expect.equalLists [ 3000, 2000, 1000 ]
                                 ]
                 in
-                result
+                sessionState.history
+                    |> List.Extra.scanr
+                        (\event balanceAfterEvent ->
+                            balanceAfterEvent - event.payout + event.bet
+                        )
+                        6000
+                    |> Expect.equal [ 3000, 2000, 1000, 6000 ]
         ]
