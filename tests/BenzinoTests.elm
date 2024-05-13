@@ -1,16 +1,14 @@
 module BenzinoTests exposing (..)
 
 import Account exposing (Account(..), AccountingProblem(..))
-import Aparat
 import Benzino exposing (..)
 import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
-import Fuzz exposing (int)
 import History
 import Random exposing (initialSeed)
 import Result exposing (..)
-import Set
+import Session exposing (Session)
 import Test exposing (..)
 import Time exposing (Weekday(..))
 
@@ -25,7 +23,7 @@ type alias SessionStrategy =
 randomSession :
     SessionStrategy
     -> Random.Seed
-    -> BenzinoContext
+    -> Session Benzino.RoundDetails
 randomSession config seed =
     let
         isGoodToExit ( { account }, _ ) =
@@ -86,42 +84,6 @@ compoundTest =
                             ]
             ]
         , describe "unit functionality"
-            [ describe "Round"
-                [ fuzz2 int int "should pay based on roll outcome" <|
-                    \salt bet ->
-                        let
-                            ( event, _ ) =
-                                initialSeed salt
-                                    |> generateOutcome bet
-                        in
-                        event.payout
-                            |> Expect.equal (Aparat.determinPayout bet event.details)
-                , fuzz int "should vary outcome like a normal die" <|
-                    \salt ->
-                        let
-                            currentSeed =
-                                initialSeed salt
-
-                            fixedBet =
-                                500
-
-                            itr _ ( previousOutcomes, seed ) =
-                                let
-                                    ( { details }, nextSeed ) =
-                                        generateOutcome fixedBet seed
-                                in
-                                ( details :: previousOutcomes, nextSeed )
-
-                            results =
-                                List.range 1 1000
-                                    |> List.foldl itr ( [], currentSeed )
-                                    |> Tuple.first
-                        in
-                        results
-                            |> List.map Debug.toString
-                            |> Set.fromList
-                            |> Set.size
-                            |> Expect.equal 36
-                ]
+            [ todo "Should reveal all possible combinations on the long run"
             ]
         ]

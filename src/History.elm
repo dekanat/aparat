@@ -5,8 +5,8 @@ import Random
 
 
 type alias DeterminedEvent a =
-    { details : a
-    , seed : Random.Seed
+    { seed : Random.Seed
+    , details : a
     , bet : Money
     , payout : Money
     }
