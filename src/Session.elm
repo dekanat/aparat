@@ -1,7 +1,7 @@
 module Session exposing (..)
 
 import Account exposing (Account)
-import History exposing (History, RoundSnapshot)
+import History exposing (History)
 import Random
 
 
@@ -17,10 +17,3 @@ type alias SessionState outcomes =
 
 type SessionProblem
     = NonRecoverable
-
-
-evolveState : SessionState e -> RoundSnapshot e -> SessionState e
-evolveState currentState snapshot =
-    { history = currentState.history |> History.record snapshot
-    , account = currentState.account |> Account.add (snapshot |> Tuple.second |> .payout)
-    }

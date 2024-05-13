@@ -1,23 +1,18 @@
 module History exposing (..)
 
-import Account exposing (Account)
 import Round exposing (Round)
 
 
-type alias RoundSnapshot e =
-    ( Account, Round e )
-
-
 type alias History e =
-    List (RoundSnapshot e)
+    List (Round e)
 
 
-record : RoundSnapshot e -> History e -> History e
-record ( accountDuringRound, round ) history =
-    history ++ [ ( accountDuringRound, round ) ]
+add : Round e -> History e -> History e
+add event history =
+    history ++ [ event ]
 
 
-last : History e -> Maybe (RoundSnapshot e)
+last : History e -> Maybe (Round e)
 last =
     List.head
 

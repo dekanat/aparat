@@ -90,7 +90,7 @@ rollResultsDisplay history =
         Nothing ->
             pictogramFor ( Shesh, Yek )
 
-        Just ( _, { details } ) ->
+        Just { details } ->
             pictogramFor details
 
 
