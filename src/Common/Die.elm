@@ -23,9 +23,9 @@ rollingDie =
         ]
 
 
-pictogramFor : Face -> String
-pictogramFor dieFace =
-    case dieFace of
+glyphFor : Face -> String
+glyphFor face =
+    case face of
         Yek ->
             "⚀"
 

@@ -1,53 +1,40 @@
 module Benzino exposing (..)
 
-import Balance exposing (Balance(..), BalanceIssues(..))
-import Common.Die exposing (Face, rollingDie)
+import Account exposing (Account(..))
+import Aparat exposing (DiceRoll)
 import Common.Money exposing (Money)
+import History
 import Random
+import Round exposing (Round)
+import Session exposing (Session, SessionProblem(..), SessionState)
 
 
-type Bet
-    = Bet Money
+type alias RoundDetails =
+    DiceRoll
 
 
-type RoundOutcome
-    = ReturnToPlayer Money
-
-
-type alias RollOutcome =
-    ( Face, Face )
-
-
-type RoundState
-    = Initiated
-    | Resolved RollOutcome RoundOutcome
-
-
-makeBet : Money -> Balance -> Result BalanceIssues ( Bet, Balance )
-makeBet amountToBet balance =
+playOnce : Money -> Session DiceRoll -> Result SessionProblem (Session DiceRoll)
+playOnce amountToBet ( aggregates, seed ) =
     let
-        acceptBet reducedBalance =
-            ( Bet amountToBet, reducedBalance )
-    in
-    Balance.takeFrom balance amountToBet
-        |> Result.map acceptBet
-
-
-rollingPairOfDice : Random.Generator RollOutcome
-rollingPairOfDice =
-    Random.pair rollingDie rollingDie
-
-
-determinePayout : RollOutcome -> Bet -> RoundOutcome
-determinePayout ( rolledA, rolledB ) bet =
-    case bet of
-        Bet amount ->
+        settleSessionState accountAfterBet =
             let
-                winScale =
-                    if rolledA == rolledB then
-                        6
+                settleRound : DiceRoll -> Round DiceRoll
+                settleRound roll =
+                    roll
+                        |> Aparat.calculatePayout amountToBet
+                        |> Round seed roll amountToBet
 
-                    else
-                        0
+                evolveState : Round DiceRoll -> SessionState DiceRoll
+                evolveState event =
+                    { history = aggregates.history |> History.add event
+                    , account = accountAfterBet |> Account.add event.payout
+                    }
             in
-            ReturnToPlayer (amount * winScale)
+            seed
+                |> Random.step Aparat.rollingPairOfDice
+                |> Tuple.mapFirst (settleRound >> evolveState)
+    in
+    aggregates.account
+        |> Account.deduct amountToBet
+        |> Result.mapError (\_ -> NonRecoverable)
+        |> Result.map settleSessionState

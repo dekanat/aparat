@@ -1,23 +1,26 @@
 module Main exposing (..)
 
-import Balance exposing (Balance(..))
-import Benzino exposing (Bet(..), RollOutcome, RoundOutcome(..), RoundState(..), makeBet, rollingPairOfDice)
+import Account exposing (Account(..))
+import Benzino
 import Browser
-import Common.Die exposing (Face(..), pictogramFor)
+import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
 import Debug exposing (toString)
 import Element
 import Element.Border
 import Element.Font
 import Element.Input
+import History exposing (History)
 import Html exposing (Html)
 import Random
+import Session exposing (Session, SessionState)
 
 
 
 -- MAIN
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -32,80 +35,72 @@ main =
 
 
 type alias Model =
-    { balance : Balance
-    , round : RoundState
-    }
+    Session Benzino.RoundDetails
 
 
 type Msg
     = PlayerWantsToBet Money
-    | RoundResolves Bet RollOutcome
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg { balance, round } =
+update msg session =
     case msg of
         PlayerWantsToBet moneyToBet ->
-            case makeBet moneyToBet balance of
-                Ok ( bet, remainingBalance ) ->
-                    ( { balance = remainingBalance
-                      , round = Initiated
-                      }
-                    , Random.generate (RoundResolves bet) rollingPairOfDice
+            case Benzino.playOnce moneyToBet session of
+                Ok ctx ->
+                    ( ctx
+                    , Cmd.none
                     )
 
                 Err _ ->
-                    ( { balance = balance, round = round }, Cmd.none )
-
-        RoundResolves bet settledCombination ->
-            let
-                afterEffecs =
-                    bet
-                        |> Benzino.determinePayout settledCombination
-
-                newState =
-                    case afterEffecs of
-                        ReturnToPlayer amount ->
-                            { balance = Balance.topUp balance amount
-                            , round = Resolved settledCombination afterEffecs
-                            }
-            in
-            ( newState, Cmd.none )
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { balance = Balance 3000
-      , round = Resolved ( Yek, Du ) (ReturnToPlayer 0)
-      }
-    , Cmd.none
-    )
+                    ( session, Cmd.none )
 
 
 
 -- VIEW
 
 
-displayBenzinoScene : { a | balance : Balance, round : RoundState } -> Element.Element Msg
-displayBenzinoScene { balance, round } =
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( ( { history = History.empty
+        , account = Account 3000
+        }
+      , Random.initialSeed 0
+      )
+    , Cmd.none
+    )
+
+
+rollResultsDisplay : History Benzino.RoundDetails -> Element.Element Msg
+rollResultsDisplay history =
+    let
+        xxlSize =
+            200
+
+        pictogramFor : ( Face, Face ) -> Element.Element Msg
+        pictogramFor ( rolledA, rolledB ) =
+            Element.row
+                [ Element.Font.size xxlSize
+                ]
+                [ Element.text (glyphFor rolledA)
+                , Element.text (glyphFor rolledB)
+                ]
+    in
+    case History.last history of
+        Nothing ->
+            pictogramFor ( Shesh, Yek )
+
+        Just { details } ->
+            pictogramFor details
+
+
+displayBenzinoScene : SessionState Benzino.RoundDetails -> Element.Element Msg
+displayBenzinoScene { account, history } =
     let
         balanceDisplay =
-            case balance of
-                Balance b ->
-                    Element.text ("Balance: " ++ toString b)
-
-        rollResultsDisplay =
-            case round of
-                Initiated ->
-                    Element.text "Rolling..."
-
-                Resolved ( rolledA, rolledB ) _ ->
-                    Element.row
-                        [ Element.Font.size 200
-                        ]
-                        [ Element.text (pictogramFor rolledA)
-                        , Element.text (pictogramFor rolledB)
-                        ]
+            case account of
+                Account balance ->
+                    Element.text ("Account Balance: " ++ toString balance)
 
         rollTrigger =
             Element.Input.button
@@ -122,12 +117,12 @@ displayBenzinoScene { balance, round } =
         [ Element.el
             [ Element.alignRight ]
             balanceDisplay
-        , rollResultsDisplay
+        , rollResultsDisplay history
         , rollTrigger
         ]
 
 
 view : Model -> Html Msg
-view model =
+view ( aggregates, _ ) =
     Element.layout [ Element.padding 50 ]
-        (displayBenzinoScene model)
+        (displayBenzinoScene aggregates)
