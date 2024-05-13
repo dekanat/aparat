@@ -1,5 +1,6 @@
 module History exposing (..)
 
+import List.Extra
 import Round exposing (Round)
 
 
@@ -14,7 +15,7 @@ add event history =
 
 last : History e -> Maybe (Round e)
 last =
-    List.head
+    List.Extra.last
 
 
 empty : History e
