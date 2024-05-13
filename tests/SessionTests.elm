@@ -43,23 +43,23 @@ sessionOperations =
                         , account = Account 6000
                         }
 
-                    replay : (( Money, DeterminedEvent a ) -> b) -> SessionState a -> List b
-                    replay mapper { history, account } =
+                    balanceThroughout : SessionState a -> List Money
+                    balanceThroughout { history, account } =
                         let
-                            settledBalanceFlow =
-                                history
-                                    |> List.Extra.scanr
-                                        (\event balanceAfterEvent ->
-                                            balanceAfterEvent - event.payout + event.bet
-                                        )
-                                        (balanceOf account)
+                            recoverEarlier event balanceAfterEvent =
+                                balanceAfterEvent - event.payout + event.bet
+                        in
+                        history |> List.Extra.scanr recoverEarlier (balanceOf account)
 
+                    replay : (( Money, DeterminedEvent a ) -> b) -> SessionState a -> List b
+                    replay mapper currentState =
+                        let
                             adjustBalanceDynamics ( balanceBeforeEvent, event ) =
                                 ( balanceBeforeEvent - event.bet, event )
 
                             mixedSequence =
-                                history
-                                    |> List.Extra.zip settledBalanceFlow
+                                currentState.history
+                                    |> List.Extra.zip (balanceThroughout currentState)
                                     |> List.map adjustBalanceDynamics
                         in
                         mixedSequence
