@@ -31,6 +31,11 @@ deduct amount account =
 
 hasAtLeast : Money -> Account -> Bool
 hasAtLeast amount account =
+    balanceOf account >= amount
+
+
+balanceOf : Account -> Money
+balanceOf account =
     case account of
         Account balance ->
-            balance >= amount
+            balance

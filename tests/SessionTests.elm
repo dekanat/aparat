@@ -1,6 +1,6 @@
 module SessionTests exposing (..)
 
-import Account exposing (Account(..))
+import Account exposing (Account(..), balanceOf)
 import Aparat exposing (DiceRoll)
 import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
@@ -44,40 +44,31 @@ sessionOperations =
                         }
 
                     replay : (( Money, DeterminedEvent a ) -> b) -> SessionState a -> List b
-                    replay mapper { account, history } =
+                    replay mapper { history, account } =
                         let
-                            balance =
-                                6000
-
-                            balanceFlowBeforeBets =
+                            settledBalanceFlow =
                                 history
-                                    |> List.Extra.scanl
+                                    |> List.Extra.scanr
                                         (\event balanceAfterEvent ->
                                             balanceAfterEvent - event.payout + event.bet
                                         )
-                                        balance
+                                        (balanceOf account)
 
-                            applyMapper : DeterminedEvent a -> b
-                            applyMapper event =
-                                mapper ( balance, event )
+                            adjustBalanceDynamics ( balanceBeforeEvent, event ) =
+                                ( balanceBeforeEvent - event.bet, event )
+
+                            mixedSequence =
+                                history
+                                    |> List.Extra.zip settledBalanceFlow
+                                    |> List.map adjustBalanceDynamics
                         in
-                        history
-                            |> List.map applyMapper
-
-                    result =
-                        sessionState
-                            |> Expect.all
-                                [ replay (\( _, event ) -> event.payout > 0)
-                                    >> Expect.equalLists [ False, False, True ]
-                                , replay (\( balanceDuringEvent, event ) -> balanceDuringEvent + event.bet)
-                                    >> Expect.equalLists [ 3000, 2000, 1000 ]
-                                ]
+                        mixedSequence
+                            |> List.map mapper
                 in
-                sessionState.history
-                    |> List.Extra.scanr
-                        (\event balanceAfterEvent ->
-                            balanceAfterEvent - event.payout + event.bet
+                sessionState
+                    |> replay
+                        (\( balanceDuringEvent, event ) ->
+                            balanceDuringEvent + event.bet
                         )
-                        6000
-                    |> Expect.equal [ 3000, 2000, 1000, 6000 ]
+                    |> Expect.equal [ 3000, 2000, 1000 ]
         ]
