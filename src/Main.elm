@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Account exposing (Account(..))
-import Benzino exposing (DeterminedEvent, SessionContext)
+import Benzino exposing (BenzinoAggregates, BenzinoContext)
 import Browser
 import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
@@ -19,6 +19,7 @@ import Random
 -- MAIN
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = initContext
@@ -33,7 +34,7 @@ main =
 
 
 type alias Model =
-    SessionContext
+    BenzinoContext
 
 
 type Msg
@@ -58,7 +59,7 @@ update msg session =
 -- VIEW
 
 
-initContext : () -> ( SessionContext, Cmd Msg )
+initContext : () -> ( BenzinoContext, Cmd Msg )
 initContext _ =
     ( ( { history = History.empty
         , account = Account 3000
@@ -69,7 +70,7 @@ initContext _ =
     )
 
 
-rollResultsDisplay : List DeterminedEvent -> Element.Element Msg
+rollResultsDisplay : List Benzino.BenzinoEvent -> Element.Element Msg
 rollResultsDisplay history =
     let
         xxlSize =
@@ -88,11 +89,11 @@ rollResultsDisplay history =
         Nothing ->
             pictogramFor ( Shesh, Yek )
 
-        Just { roll } ->
-            pictogramFor roll
+        Just { details } ->
+            pictogramFor details
 
 
-displayBenzinoScene : { a | account : Account, history : List DeterminedEvent } -> Element.Element Msg
+displayBenzinoScene : BenzinoAggregates -> Element.Element Msg
 displayBenzinoScene { account, history } =
     let
         balanceDisplay =

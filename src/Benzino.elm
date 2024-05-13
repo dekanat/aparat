@@ -3,7 +3,8 @@ module Benzino exposing (..)
 import Account exposing (Account(..))
 import Aparat exposing (DiceRoll)
 import Common.Money exposing (Money)
-import History exposing (History)
+import Core exposing (SessionContext, SessionProblem(..))
+import History exposing (DeterminedEvent, History)
 import Random
 
 
@@ -11,31 +12,31 @@ type alias Bet =
     Money
 
 
-type alias SessionAggregates =
-    { history : History DeterminedEvent
+type alias BenzinoEvent =
+    DeterminedEvent DiceRoll
+
+
+type alias BenzinoAggregates =
+    { history : History DiceRoll
     , account : Account
     }
 
 
-type alias SessionContext =
-    ( SessionAggregates, Random.Seed )
+type alias BenzinoContext =
+    SessionContext BenzinoAggregates
 
 
-type SessionProblem
-    = NonRecoverable
-
-
-playOnce : Money -> SessionContext -> Result SessionProblem SessionContext
+playOnce : Money -> SessionContext BenzinoAggregates -> Result SessionProblem (SessionContext BenzinoAggregates)
 playOnce amountToBet ( aggregates, seed ) =
     let
-        resolveBet : Bet -> Account -> SessionContext
+        resolveBet : Bet -> Account -> BenzinoContext
         resolveBet betAmount accountAfterBet =
             let
-                settleAggregates : DeterminedEvent -> SessionAggregates
+                settleAggregates : BenzinoEvent -> BenzinoAggregates
                 settleAggregates event =
-                    SessionAggregates
-                        (aggregates.history |> History.add event)
-                        (accountAfterBet |> Account.add event.payout)
+                    { history = aggregates.history |> History.add event
+                    , account = accountAfterBet |> Account.add event.payout
+                    }
             in
             seed
                 |> generateOutcome betAmount
@@ -47,26 +48,18 @@ playOnce amountToBet ( aggregates, seed ) =
         |> Result.map (resolveBet amountToBet)
 
 
-type alias DeterminedEvent =
-    { seed : Random.Seed
-    , bet : Money
-    , roll : DiceRoll
-    , payout : Money
-    }
+type alias RollingRandom =
+    ( BenzinoEvent, Random.Seed )
 
 
-type alias RandomOutcome =
-    ( DeterminedEvent, Random.Seed )
-
-
-generateOutcome : Money -> Random.Seed -> ( DeterminedEvent, Random.Seed )
+generateOutcome : Money -> Random.Seed -> RollingRandom
 generateOutcome bet seed =
     let
-        resolveEvent : DiceRoll -> DeterminedEvent
+        resolveEvent : DiceRoll -> BenzinoEvent
         resolveEvent roll =
             roll
                 |> Aparat.determinPayout bet
-                |> DeterminedEvent seed bet roll
+                |> DeterminedEvent roll seed bet
     in
     seed
         |> Random.step Aparat.rollingPairOfDice

@@ -7,7 +7,7 @@ import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import Fuzz exposing (int)
-import History exposing (History)
+import History
 import Random exposing (initialSeed)
 import Result exposing (..)
 import Set
@@ -15,10 +15,17 @@ import Test exposing (..)
 import Time exposing (Weekday(..))
 
 
+type alias SessionStrategy =
+    { initialBalance : Money
+    , betAmount : Money
+    , desiredBalance : Money
+    }
+
+
 randomSession :
-    { a | initialBalance : Money, desiredBalance : Money, betAmount : Money }
+    SessionStrategy
     -> Random.Seed
-    -> SessionContext
+    -> BenzinoContext
 randomSession config seed =
     let
         isGoodToExit ( { account }, _ ) =
@@ -88,7 +95,7 @@ compoundTest =
                                     |> generateOutcome bet
                         in
                         event.payout
-                            |> Expect.equal (Aparat.determinPayout bet event.roll)
+                            |> Expect.equal (Aparat.determinPayout bet event.details)
                 , fuzz int "should vary outcome like a normal die" <|
                     \salt ->
                         let
@@ -100,10 +107,10 @@ compoundTest =
 
                             itr _ ( previousOutcomes, seed ) =
                                 let
-                                    ( { roll }, nextSeed ) =
+                                    ( { details }, nextSeed ) =
                                         generateOutcome fixedBet seed
                                 in
-                                ( roll :: previousOutcomes, nextSeed )
+                                ( details :: previousOutcomes, nextSeed )
 
                             results =
                                 List.range 1 1000
