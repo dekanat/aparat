@@ -1,14 +1,17 @@
-module Benzino.BenzinoTests exposing (..)
+module Benzino.RandomDeviceTests exposing (..)
 
 import Account exposing (Account(..), AccountingProblem(..))
+import Aparat exposing (rollingPairOfDice)
 import Benzino exposing (..)
 import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History
+import List.Extra
 import Random exposing (initialSeed)
 import Result exposing (..)
 import Session exposing (Session)
+import Set
 import Test exposing (..)
 import Time exposing (Weekday(..))
 
@@ -52,32 +55,28 @@ randomSession config seed =
 
 compoundTest : Test
 compoundTest =
-    describe "Game"
-        [ describe "Continous sessions"
-            [ test "player may win or lose before doubling wealth" <|
-                \() ->
-                    let
-                        manySessions =
-                            100
+    describe "Random Device fo benzino"
+        [ test "Should reveal all possible combinations on the long run" <|
+            \() ->
+                let
+                    randomLoop _ ( events, currentSeed ) =
+                        let
+                            ( event, nextSeed ) =
+                                Random.step rollingPairOfDice currentSeed
+                        in
+                        ( event :: events, nextSeed )
 
-                        fixedSettings =
-                            { initialBalance = 1000
-                            , desiredBalance = 2000
-                            , betAmount = 100
-                            }
+                    longSim =
+                        List.range 1 1000
+                            |> List.foldl randomLoop ( [], Random.initialSeed 1 )
+                            |> Tuple.first
 
-                        independentSessions =
-                            manySessions
-                                |> (List.range 1 >> List.map initialSeed)
-                                |> List.map (randomSession fixedSettings)
-                                |> List.map Tuple.first
-                    in
-                    -- TODO: imi bereq mi hat
-                    independentSessions
-                        |> Expect.all
-                            [ List.filter (.account >> Account.hasAtLeast 1000)
-                                >> List.length
-                                >> Expect.all [ Expect.atLeast 25, Expect.atMost 75 ]
-                            ]
-            ]
+                    uniquePairs =
+                        longSim
+                            |> List.map Debug.toString
+                            |> Set.fromList
+                in
+                uniquePairs
+                    |> Set.size
+                    |> Expect.equal 36
         ]
