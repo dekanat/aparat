@@ -38,38 +38,16 @@ sessionOperations =
                     sessionState =
                         { history =
                             History.empty
-                                |> History.add (stubLoseNo 1)
-                                |> History.add (stubLoseNo 2)
-                                |> History.add (stubWinNo 3)
+                                |> History.record ( Account 2000, stubLoseNo 1 )
+                                |> History.record ( Account 1000, stubLoseNo 2 )
+                                |> History.record ( Account 0, stubWinNo 3 )
                         , account = Account 6000
                         }
-
-                    balanceThroughout : SessionState a -> List Money
-                    balanceThroughout { history, account } =
-                        let
-                            recoverEarlier event balanceAfterEvent =
-                                balanceAfterEvent - event.payout + event.bet
-                        in
-                        history |> List.Extra.scanr recoverEarlier (balanceOf account)
-
-                    replay : (( Money, Round a ) -> b) -> SessionState a -> List b
-                    replay mapper currentState =
-                        let
-                            adjustBalanceDynamics ( balanceBeforeEvent, event ) =
-                                ( balanceBeforeEvent - event.bet, event )
-
-                            mixedSequence =
-                                currentState.history
-                                    |> List.Extra.zip (balanceThroughout currentState)
-                                    |> List.map adjustBalanceDynamics
-                        in
-                        mixedSequence
-                            |> List.map mapper
                 in
-                sessionState
-                    |> replay
-                        (\( balanceDuringEvent, event ) ->
-                            balanceDuringEvent + event.bet
+                sessionState.history
+                    |> List.map
+                        (\( accountDuringRound, event ) ->
+                            balanceOf accountDuringRound + event.bet
                         )
                     |> Expect.equal [ 3000, 2000, 1000 ]
         ]

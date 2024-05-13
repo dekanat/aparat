@@ -3,7 +3,7 @@ module Benzino exposing (..)
 import Account exposing (Account(..))
 import Aparat exposing (DiceRoll)
 import Common.Money exposing (Money)
-import History
+import History exposing (RoundSnapshot)
 import Random
 import Round exposing (Round)
 import Session exposing (Session, SessionProblem(..), SessionState)
@@ -16,7 +16,11 @@ type alias RoundDetails =
 playOnce : Money -> Session DiceRoll -> Result SessionProblem (Session DiceRoll)
 playOnce amountToBet ( aggregates, seed ) =
     let
-        settleSessionState accountAfterBet =
+        evolveSessionState : ( RoundSnapshot DiceRoll, Random.Seed ) -> ( SessionState DiceRoll, Random.Seed )
+        evolveSessionState =
+            Tuple.mapFirst (Session.evolveState aggregates)
+
+        settleRoundSnapshot accountDuringRound =
             let
                 settleRound : DiceRoll -> Round DiceRoll
                 settleRound roll =
@@ -24,17 +28,14 @@ playOnce amountToBet ( aggregates, seed ) =
                         |> Aparat.calculatePayout amountToBet
                         |> Round seed roll amountToBet
 
-                evolveState : Round DiceRoll -> SessionState DiceRoll
-                evolveState event =
-                    { history = aggregates.history |> History.add event
-                    , account = accountAfterBet |> Account.add event.payout
-                    }
+                completeSnapshot =
+                    Tuple.pair accountDuringRound
             in
             seed
                 |> Random.step Aparat.rollingPairOfDice
-                |> Tuple.mapFirst (settleRound >> evolveState)
+                |> Tuple.mapFirst (settleRound >> completeSnapshot)
     in
     aggregates.account
         |> Account.deduct amountToBet
         |> Result.mapError (\_ -> NonRecoverable)
-        |> Result.map settleSessionState
+        |> Result.map (settleRoundSnapshot >> evolveSessionState)
