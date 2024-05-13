@@ -1,27 +1,18 @@
 module History exposing (..)
 
-import Common.Money exposing (Money)
-import Random
-
-
-type alias DeterminedEvent a =
-    { seed : Random.Seed
-    , details : a
-    , bet : Money
-    , payout : Money
-    }
+import Round exposing (Round)
 
 
 type alias History e =
-    List (DeterminedEvent e)
+    List (Round e)
 
 
-add : DeterminedEvent e -> History e -> History e
+add : Round e -> History e -> History e
 add event history =
     history ++ [ event ]
 
 
-last : History e -> Maybe (DeterminedEvent e)
+last : History e -> Maybe (Round e)
 last =
     List.head
 

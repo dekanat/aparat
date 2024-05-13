@@ -3,8 +3,9 @@ module Benzino exposing (..)
 import Account exposing (Account(..))
 import Aparat exposing (DiceRoll)
 import Common.Money exposing (Money)
-import History exposing (DeterminedEvent)
+import History
 import Random
+import Round exposing (Round)
 import Session exposing (Session, SessionProblem(..), SessionState)
 
 
@@ -17,13 +18,13 @@ playOnce amountToBet ( aggregates, seed ) =
     let
         settleSessionState accountAfterBet =
             let
-                determineOutcome : DiceRoll -> DeterminedEvent DiceRoll
-                determineOutcome roll =
+                settleRound : DiceRoll -> Round DiceRoll
+                settleRound roll =
                     roll
                         |> Aparat.calculatePayout amountToBet
-                        |> DeterminedEvent seed roll amountToBet
+                        |> Round seed roll amountToBet
 
-                evolveState : DeterminedEvent DiceRoll -> SessionState DiceRoll
+                evolveState : Round DiceRoll -> SessionState DiceRoll
                 evolveState event =
                     { history = aggregates.history |> History.add event
                     , account = accountAfterBet |> Account.add event.payout
@@ -31,7 +32,7 @@ playOnce amountToBet ( aggregates, seed ) =
             in
             seed
                 |> Random.step Aparat.rollingPairOfDice
-                |> Tuple.mapFirst (determineOutcome >> evolveState)
+                |> Tuple.mapFirst (settleRound >> evolveState)
     in
     aggregates.account
         |> Account.deduct amountToBet

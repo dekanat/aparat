@@ -5,9 +5,10 @@ import Aparat exposing (DiceRoll)
 import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
-import History exposing (DeterminedEvent)
+import History
 import List.Extra
 import Random exposing (initialSeed)
+import Round exposing (Round)
 import Session exposing (SessionState)
 import Test exposing (..)
 
@@ -18,7 +19,7 @@ sessionOperations =
         [ test "replay past events" <|
             \() ->
                 let
-                    stubLoseNo : Int -> DeterminedEvent DiceRoll
+                    stubLoseNo : Int -> Round DiceRoll
                     stubLoseNo idx =
                         { seed = initialSeed idx
                         , details = ( Yek, Du )
@@ -51,7 +52,7 @@ sessionOperations =
                         in
                         history |> List.Extra.scanr recoverEarlier (balanceOf account)
 
-                    replay : (( Money, DeterminedEvent a ) -> b) -> SessionState a -> List b
+                    replay : (( Money, Round a ) -> b) -> SessionState a -> List b
                     replay mapper currentState =
                         let
                             adjustBalanceDynamics ( balanceBeforeEvent, event ) =
