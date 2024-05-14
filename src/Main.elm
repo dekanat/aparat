@@ -119,7 +119,7 @@ displayBenzinoScene { account, history } =
                 }
     in
     Element.column
-        [ Element.width Element.fill
+        [ Element.width (Element.px 520)
         , Element.centerX
         , Element.Border.width 2
         , Element.Border.rounded 2
@@ -139,15 +139,15 @@ displayBenzinoScene { account, history } =
 view : Model -> Html Msg
 view ( aggregates, _ ) =
     Element.layout [] <|
-        Element.row
+        Element.column
             [ Element.width Element.fill
+            , Element.centerX
             , Element.centerY
             , Element.spaceEvenly
-            , Element.spacing 30
+            , Element.spacing 48
             ]
-            [ displayCharts aggregates
-            , displayBenzinoScene aggregates
-            , Element.el [ Element.width Element.fill ] Element.none
+            [ displayBenzinoScene aggregates
+            , displayCharts aggregates
             ]
 
 
@@ -205,8 +205,7 @@ displayCharts { account, history } =
                 [ CA.height 360
                 , CA.width (toFloat optimalWidth)
                 ]
-                [ C.xLabels [ CA.amount 2, CA.hideOverflow ]
-                , C.yLabels [ CA.amount 3, CA.withGrid ]
+                [ C.yLabels [ CA.amount 1, CA.withGrid ]
                 , C.series .idx
                     [ C.interpolated .balance
                         [ CA.monotone, CA.width 2 ]
@@ -241,7 +240,7 @@ displayCharts { account, history } =
         ]
         (Element.el
             [ Element.width (Element.px optimalWidth)
-            , Element.alignRight
+            , Element.centerX
             ]
             (Element.html chart)
         )
