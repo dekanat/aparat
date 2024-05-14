@@ -81,6 +81,7 @@ rollResultsDisplay history =
         pictogramFor ( rolledA, rolledB ) =
             Element.row
                 [ Element.Font.size xxlSize
+                , Element.spacing 8
                 ]
                 [ Element.text (glyphFor rolledA)
                 , Element.text (glyphFor rolledB)
@@ -113,16 +114,47 @@ displayBenzinoScene { account, history } =
                 , onPress = Just (PlayerWantsToBet 1000)
                 }
     in
-    Element.column []
+    Element.column
+        [ Element.width Element.fill
+        , Element.centerX
+        , Element.Border.width 2
+        , Element.Border.rounded 2
+        , Element.padding 32
+        , Element.spacing 8
+        ]
         [ Element.el
             [ Element.alignRight ]
             balanceDisplay
-        , rollResultsDisplay history
+        , Element.el
+            [ Element.centerX ]
+            (rollResultsDisplay history)
         , rollTrigger
         ]
 
 
 view : Model -> Html Msg
 view ( aggregates, _ ) =
-    Element.layout [ Element.padding 50 ]
-        (displayBenzinoScene aggregates)
+    Element.layout [] <|
+        Element.row
+            [ Element.width Element.fill
+            , Element.centerY
+            , Element.spaceEvenly
+            , Element.spacing 30
+            ]
+            [ displayCharts aggregates
+            , displayBenzinoScene aggregates
+            , Element.el [ Element.width (Element.px 500) ] Element.none
+            ]
+
+
+displayCharts : SessionState Benzino.RoundDetails -> Element.Element Msg
+displayCharts { account, history } =
+    let
+        x =
+            1
+    in
+    Element.el
+        [ Element.width (Element.px 500)
+        , Element.height Element.fill
+        ]
+        (Element.text "Charts")
