@@ -3,6 +3,9 @@ module Main exposing (..)
 import Account exposing (Account(..))
 import Benzino
 import Browser
+import Char exposing (isHexDigit)
+import Chart as C
+import Chart.Attributes as CA
 import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
 import Debug exposing (toString)
@@ -12,6 +15,7 @@ import Element.Font
 import Element.Input
 import History exposing (History)
 import Html exposing (Html)
+import List.Extra
 import Random
 import Session exposing (Session, SessionState)
 
@@ -143,18 +147,87 @@ view ( aggregates, _ ) =
             ]
             [ displayCharts aggregates
             , displayBenzinoScene aggregates
-            , Element.el [ Element.width (Element.px 500) ] Element.none
+            , Element.el [ Element.width Element.fill ] Element.none
             ]
+
+
+type AccountPointState
+    = Settled
+    | Won
+    | Lost
 
 
 displayCharts : SessionState Benzino.RoundDetails -> Element.Element Msg
 displayCharts { account, history } =
     let
-        x =
-            1
+        accountFlow =
+            history
+                |> List.Extra.scanr
+                    (\{ bet, payout } dirtyBalance ->
+                        dirtyBalance + bet - payout
+                    )
+                    (Account.balanceOf account)
+
+        reMid =
+            List.Extra.zip history accountFlow
+                |> List.map
+                    (\( event, balance ) ->
+                        if event.payout < event.bet then
+                            { balance = balance
+                            , status = Lost
+                            }
+
+                        else
+                            { balance = balance
+                            , status = Won
+                            }
+                    )
+
+        reAcc =
+            accountFlow
+                |> List.map (\nthAccount -> { balance = nthAccount, status = Settled })
+
+        reAll =
+            List.Extra.interweave reAcc reMid
+                |> List.indexedMap
+                    (\idx { balance, status } ->
+                        { balance = toFloat balance
+                        , status = status
+                        , idx = toFloat idx
+                        }
+                    )
+
+        optimalWidth =
+            50 + (history |> List.length) * 15
+
+        chart =
+            C.chart
+                [ CA.height 360
+                , CA.width (toFloat optimalWidth)
+                ]
+                [ C.xLabels []
+                , C.yLabels [ CA.withGrid ]
+                , C.series .idx
+                    [ C.interpolated .balance
+                        [ CA.monotone ]
+                        []
+                    ]
+                    (reAll |> List.filter (\{ status } -> status == Settled))
+                , C.series .idx
+                    [ C.scatter .balance [ CA.cross, CA.color CA.red ] ]
+                    (reAll |> List.filter (\{ status } -> status == Lost))
+                , C.series .idx
+                    [ C.scatter .balance [ CA.plus, CA.color CA.green ] ]
+                    (reAll |> List.filter (\{ status } -> status == Won))
+                ]
     in
     Element.el
-        [ Element.width (Element.px 500)
-        , Element.height Element.fill
+        [ Element.width Element.fill
+        , Element.height (Element.px 360)
         ]
-        (Element.text "Charts")
+        (Element.el
+            [ Element.width (Element.px optimalWidth)
+            , Element.alignRight
+            ]
+            (Element.html chart)
+        )
