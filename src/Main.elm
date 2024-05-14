@@ -198,27 +198,41 @@ displayCharts { account, history } =
                     )
 
         optimalWidth =
-            50 + (history |> List.length) * 15
+            ((history |> List.length) + 1) * 20
 
         chart =
             C.chart
                 [ CA.height 360
                 , CA.width (toFloat optimalWidth)
                 ]
-                [ C.xLabels []
-                , C.yLabels [ CA.withGrid ]
+                [ C.xLabels [ CA.amount 2, CA.hideOverflow ]
+                , C.yLabels [ CA.amount 3, CA.withGrid ]
                 , C.series .idx
                     [ C.interpolated .balance
-                        [ CA.monotone ]
+                        [ CA.monotone, CA.width 2 ]
                         []
                     ]
                     (reAll |> List.filter (\{ status } -> status == Settled))
                 , C.series .idx
-                    [ C.scatter .balance [ CA.cross, CA.color CA.red ] ]
-                    (reAll |> List.filter (\{ status } -> status == Lost))
-                , C.series .idx
-                    [ C.scatter .balance [ CA.plus, CA.color CA.green ] ]
-                    (reAll |> List.filter (\{ status } -> status == Won))
+                    [ C.scatter .balance []
+                        |> C.variation
+                            (\i data ->
+                                if i == 0 then
+                                    [ CA.circle, CA.color CA.blue ]
+
+                                else
+                                    case data.status of
+                                        Won ->
+                                            [ CA.plus, CA.color CA.green ]
+
+                                        Lost ->
+                                            [ CA.cross, CA.color CA.red ]
+
+                                        _ ->
+                                            [ CA.circle, CA.color CA.purple ]
+                            )
+                    ]
+                    reAll
                 ]
     in
     Element.el
