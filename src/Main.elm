@@ -3,7 +3,6 @@ module Main exposing (..)
 import Account exposing (Account(..))
 import Benzino
 import Browser
-import Char exposing (isHexDigit)
 import Chart as C
 import Chart.Attributes as CA
 import Common.Die exposing (Face(..), glyphFor)
@@ -18,6 +17,8 @@ import Html exposing (Html)
 import List.Extra
 import Random
 import Session exposing (Session, SessionState)
+import Task exposing (..)
+import Time exposing (..)
 
 
 
@@ -39,25 +40,43 @@ main =
 
 
 type alias Model =
-    Session Benzino.RoundDetails
+    { session : Session Benzino.RoundDetails
+    , initialRandomSeed : Time.Posix
+    }
 
 
 type Msg
     = PlayerWantsToBet Money
+    | FreshSeed Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case msg of
         PlayerWantsToBet moneyToBet ->
-            case Benzino.playOnce moneyToBet session of
+            case Benzino.playOnce moneyToBet session.session of
                 Ok ctx ->
-                    ( ctx
+                    ( { session = ctx, initialRandomSeed = session.initialRandomSeed }
                     , Cmd.none
                     )
 
                 Err _ ->
                     ( session, Cmd.none )
+
+        FreshSeed time ->
+            ( { session =
+                    ( Tuple.first session.session
+                    , Random.initialSeed (Time.posixToMillis time)
+                    )
+              , initialRandomSeed = time
+              }
+            , Cmd.none
+            )
+
+
+getFreshSeed : Cmd Msg
+getFreshSeed =
+    Task.perform FreshSeed Time.now
 
 
 
@@ -66,12 +85,15 @@ update msg session =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( ( { history = History.empty
-        , account = Account 3000
-        }
-      , Random.initialSeed 0
-      )
-    , Cmd.none
+    ( { session =
+            ( { history = History.empty
+              , account = Account 10000
+              }
+            , Random.initialSeed 0
+            )
+      , initialRandomSeed = Time.millisToPosix 0
+      }
+    , getFreshSeed
     )
 
 
@@ -137,18 +159,20 @@ displayBenzinoScene { account, history } =
 
 
 view : Model -> Html Msg
-view ( aggregates, _ ) =
-    Element.layout [] <|
-        Element.column
-            [ Element.width Element.fill
-            , Element.centerX
-            , Element.centerY
-            , Element.spaceEvenly
-            , Element.spacing 48
-            ]
-            [ displayBenzinoScene aggregates
-            , displayCharts aggregates
-            ]
+view model =
+    case model.session of
+        ( aggregates, _ ) ->
+            Element.layout [] <|
+                Element.column
+                    [ Element.width Element.fill
+                    , Element.centerX
+                    , Element.centerY
+                    , Element.spaceEvenly
+                    , Element.spacing 48
+                    ]
+                    [ displayBenzinoScene aggregates
+                    , displayCharts aggregates
+                    ]
 
 
 type AccountPointState
