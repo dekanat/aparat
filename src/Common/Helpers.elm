@@ -16,3 +16,18 @@ slidingWindow size initialList =
 
     else
         slide initialList
+
+
+slidingPair : List a -> List ( a, a )
+slidingPair list =
+    list
+        |> slidingWindow 2
+        |> List.filterMap
+            (\window ->
+                case window of
+                    [ a, b ] ->
+                        Just ( a, b )
+
+                    _ ->
+                        Nothing
+            )

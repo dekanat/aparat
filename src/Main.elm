@@ -146,7 +146,7 @@ view ( aggregates, _ ) =
             [ displayBenzinoScene aggregates
             , Element.el
                 [ Element.width Element.fill
-                , Element.height (Element.px 360)
+                , Element.padding 64
                 ]
                 (plotSession aggregates)
             ]

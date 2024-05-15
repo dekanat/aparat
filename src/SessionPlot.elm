@@ -22,7 +22,7 @@ type alias BalancePoint =
 
 type PlotElement
     = Settled BalancePoint
-    | ResultIdentificator { idx : Float, isWin : Bool }
+    | Sliding ( BalancePoint, BalancePoint )
 
 
 slidingPair : List a -> List ( a, a )
@@ -40,33 +40,48 @@ slidingPair list =
             )
 
 
-plotIdentificators plottedBalanceFlow =
+scatterIndicators plottedBalance =
     let
-        plottedWinLose =
-            plottedBalanceFlow
-                |> slidingPair
-                |> List.map
-                    (\( a, b ) ->
-                        { idx = a.idx + (b.idx - a.idx) / 2
-                        , isWin = b.balance > a.balance
-                        }
+        midpointX ( a, b ) =
+            (a.idx + b.idx) / 2
+
+        markOnFixedY =
+            C.scatter (always 0) []
+                |> C.variation
+                    (\_ ( a, b ) ->
+                        if a.balance < b.balance then
+                            [ CA.plus, CA.color CA.mint ]
+
+                        else
+                            [ CA.cross, CA.color CA.pink ]
                     )
-
-        scatterIdentificators =
-            C.seriesMap ResultIdentificator
-                .idx
-                [ C.scatter (\_ -> 0) []
-                    |> C.variation
-                        (\_ w ->
-                            if w.isWin then
-                                [ CA.plus, CA.color CA.mint ]
-
-                            else
-                                [ CA.cross, CA.color CA.pink ]
-                        )
-                ]
     in
-    scatterIdentificators plottedWinLose
+    plottedBalance
+        |> slidingPair
+        |> C.seriesMap Sliding midpointX [ markOnFixedY ]
+
+
+delineateBalanceFlow =
+    C.seriesMap Settled
+        .idx
+        [ C.interpolated .balance
+            [ CA.monotone, CA.width 2 ]
+            [ CA.circle ]
+        ]
+
+
+takeRight : Int -> List a -> List a
+takeRight n list =
+    let
+        card =
+            List.length list
+    in
+    if card > n then
+        list
+            |> List.drop (card - n)
+
+    else
+        list
 
 
 plotSession : SessionState e -> Element msg
@@ -76,31 +91,31 @@ plotSession currentState =
             currentState
                 |> Session.balanceSettledThrough
 
-        plottedBalanceFlow =
+        plottedBalance =
             balanceFlow
                 |> List.indexedMap plotBalancePoint
 
-        optimalWidth =
-            List.length balanceFlow * 20
+        unitSize =
+            20
+
+        fullHeight =
+            unitSize * 20
+
+        fullWidth =
+            List.length balanceFlow * unitSize
 
         chart =
             C.chart
-                [ CA.height 360
-                , CA.width (toFloat optimalWidth)
+                [ CA.height (toFloat fullHeight)
+                , CA.width (toFloat fullWidth)
                 ]
                 [ C.yLabels [ CA.amount 1, CA.withGrid ]
-                , C.seriesMap Settled
-                    .idx
-                    [ C.interpolated .balance
-                        [ CA.monotone, CA.width 2 ]
-                        [ CA.circle ]
-                    ]
-                    plottedBalanceFlow
-                , plotIdentificators plottedBalanceFlow
+                , delineateBalanceFlow plottedBalance
+                , scatterIndicators plottedBalance
                 ]
     in
     Element.el
-        [ Element.width (Element.px optimalWidth)
-        , Element.centerX
+        [ Element.width (Element.px fullWidth)
+        , Element.alignRight
         ]
         (Element.html chart)
