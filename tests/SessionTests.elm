@@ -16,7 +16,24 @@ import Test exposing (..)
 sessionOperations : Test
 sessionOperations =
     describe "Session Operations"
-        [ test "replay past events" <|
+        [ describe "balance throughout session"
+            [ test "empty history" <|
+                \() ->
+                    Session.balanceSettledThrough (SessionState History.empty (Account 10000))
+                        |> Expect.equal [ 10000 ]
+            , test "rich history of events" <|
+                \() ->
+                    let
+                        richHistory =
+                            History.empty
+                                |> History.add { seed = initialSeed 1, bet = 1000, payout = 0, details = ( Yek, Du ) }
+                                |> History.add { seed = initialSeed 2, bet = 1000, payout = 0, details = ( Yek, Du ) }
+                                |> History.add { seed = initialSeed 3, bet = 1000, payout = 6000, details = ( Yek, Yek ) }
+                    in
+                    Session.balanceSettledThrough (SessionState richHistory (Account 10000))
+                        |> Expect.equal [ 7000, 6000, 5000, 10000 ]
+            ]
+        , test "replay past events" <|
             \() ->
                 let
                     stubLoseNo : Int -> Round DiceRoll
@@ -44,14 +61,6 @@ sessionOperations =
                         , account = Account 6000
                         }
 
-                    balanceThroughout : SessionState a -> List Money
-                    balanceThroughout { history, account } =
-                        let
-                            recoverEarlier event balanceAfterEvent =
-                                balanceAfterEvent - event.payout + event.bet
-                        in
-                        history |> List.Extra.scanr recoverEarlier (balanceOf account)
-
                     replay : (( Money, Round a ) -> b) -> SessionState a -> List b
                     replay mapper currentState =
                         let
@@ -60,7 +69,7 @@ sessionOperations =
 
                             mixedSequence =
                                 currentState.history
-                                    |> List.Extra.zip (balanceThroughout currentState)
+                                    |> List.Extra.zip (Session.balanceSettledThrough currentState)
                                     |> List.map adjustBalanceDynamics
                         in
                         mixedSequence
