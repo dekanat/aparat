@@ -1,7 +1,7 @@
 module SessionPlot exposing (..)
 
 import Chart as C
-import Chart.Attributes as CA
+import Chart.Attributes as CA exposing (window)
 import Common.Helpers exposing (slidingWindow)
 import Element exposing (..)
 import Session exposing (SessionState)
@@ -14,38 +14,43 @@ plotBalancePoint idx balance =
     }
 
 
+type alias BalancePoint =
+    { idx : Float
+    , balance : Float
+    }
+
+
 type PlotElement
-    = BalanceLine { idx : Float, balance : Float }
+    = Settled BalancePoint
     | ResultIdentificator { idx : Float, isWin : Bool }
 
 
-plotSession : SessionState e -> Element msg
-plotSession currentState =
+slidingPair : List a -> List ( a, a )
+slidingPair list =
+    list
+        |> slidingWindow 2
+        |> List.filterMap
+            (\window ->
+                case window of
+                    [ a, b ] ->
+                        Just ( a, b )
+
+                    _ ->
+                        Nothing
+            )
+
+
+plotIdentificators plottedBalanceFlow =
     let
-        balanceFlow =
-            currentState
-                |> Session.balanceSettledThrough
-
-        plottedBalanceFlow =
-            balanceFlow
-                |> List.indexedMap plotBalancePoint
-
         plottedWinLose =
             plottedBalanceFlow
-                |> slidingWindow 2
-                |> List.foldl
-                    (\window acc ->
-                        case window of
-                            [ a, b ] ->
-                                { idx = a.idx + (b.idx - a.idx) / 2
-                                , isWin = b.balance > a.balance
-                                }
-                                    :: acc
-
-                            _ ->
-                                acc
+                |> slidingPair
+                |> List.map
+                    (\( a, b ) ->
+                        { idx = a.idx + (b.idx - a.idx) / 2
+                        , isWin = b.balance > a.balance
+                        }
                     )
-                    []
 
         scatterIdentificators =
             C.seriesMap ResultIdentificator
@@ -60,7 +65,20 @@ plotSession currentState =
                                 [ CA.cross, CA.color CA.pink ]
                         )
                 ]
-                plottedWinLose
+    in
+    scatterIdentificators plottedWinLose
+
+
+plotSession : SessionState e -> Element msg
+plotSession currentState =
+    let
+        balanceFlow =
+            currentState
+                |> Session.balanceSettledThrough
+
+        plottedBalanceFlow =
+            balanceFlow
+                |> List.indexedMap plotBalancePoint
 
         optimalWidth =
             List.length balanceFlow * 20
@@ -71,14 +89,14 @@ plotSession currentState =
                 , CA.width (toFloat optimalWidth)
                 ]
                 [ C.yLabels [ CA.amount 1, CA.withGrid ]
-                , C.seriesMap BalanceLine
+                , C.seriesMap Settled
                     .idx
                     [ C.interpolated .balance
                         [ CA.monotone, CA.width 2 ]
                         [ CA.circle ]
                     ]
                     plottedBalanceFlow
-                , scatterIdentificators
+                , plotIdentificators plottedBalanceFlow
                 ]
     in
     Element.el
