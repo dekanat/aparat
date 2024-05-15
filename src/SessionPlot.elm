@@ -2,54 +2,26 @@ module SessionPlot exposing (..)
 
 import Chart as C
 import Chart.Attributes as CA
+import Common.Money exposing (Money)
 import Element exposing (..)
-import List.Extra
 import Session exposing (SessionState)
 
 
-type AccountPointState
-    = Settled
-    | Won
-    | Lost
+type alias BalancePlotPoint =
+    { idx : Int
+    , balance : Money
+    }
 
 
 plotSession : SessionState e -> Element msg
 plotSession currentState =
     let
-        accountFlow =
-            Session.balanceSettledThrough currentState
-
-        reMid =
-            List.Extra.zip currentState.history accountFlow
-                |> List.map
-                    (\( event, balance ) ->
-                        if event.payout < event.bet then
-                            { balance = balance
-                            , status = Lost
-                            }
-
-                        else
-                            { balance = balance
-                            , status = Won
-                            }
-                    )
-
-        reAcc =
-            accountFlow
-                |> List.map (\nthAccount -> { balance = nthAccount, status = Settled })
-
-        reAll =
-            List.Extra.interweave reAcc reMid
-                |> List.indexedMap
-                    (\idx { balance, status } ->
-                        { balance = toFloat balance
-                        , status = status
-                        , idx = toFloat idx
-                        }
-                    )
+        balanceFlow =
+            currentState
+                |> Session.balanceSettledThrough
 
         optimalWidth =
-            ((currentState.history |> List.length) + 1) * 20
+            List.length balanceFlow * 20
 
         chart =
             C.chart
@@ -57,32 +29,12 @@ plotSession currentState =
                 , CA.width (toFloat optimalWidth)
                 ]
                 [ C.yLabels [ CA.amount 1, CA.withGrid ]
-                , C.series .idx
-                    [ C.interpolated .balance
+                , C.series (.idx >> toFloat)
+                    [ C.interpolated (.balance >> toFloat)
                         [ CA.monotone, CA.width 2 ]
-                        []
+                        [ CA.circle ]
                     ]
-                    (reAll |> List.filter (\{ status } -> status == Settled))
-                , C.series .idx
-                    [ C.scatter .balance []
-                        |> C.variation
-                            (\i data ->
-                                if i == 0 then
-                                    [ CA.circle, CA.color CA.blue ]
-
-                                else
-                                    case data.status of
-                                        Won ->
-                                            [ CA.plus, CA.color CA.green ]
-
-                                        Lost ->
-                                            [ CA.cross, CA.color CA.red ]
-
-                                        _ ->
-                                            [ CA.circle, CA.color CA.purple ]
-                            )
-                    ]
-                    reAll
+                    (balanceFlow |> List.indexedMap BalancePlotPoint)
                 ]
     in
     Element.el
