@@ -1,6 +1,5 @@
 module SessionPlot exposing (..)
 
-import Account
 import Chart as C
 import Chart.Attributes as CA
 import Element exposing (..)

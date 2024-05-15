@@ -1,6 +1,6 @@
 module SessionTests exposing (..)
 
-import Account exposing (Account(..), balanceOf)
+import Account exposing (Account(..))
 import Aparat exposing (DiceRoll)
 import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)

@@ -3,9 +3,6 @@ module Main exposing (..)
 import Account exposing (Account(..))
 import Benzino
 import Browser
-import Char exposing (isHexDigit)
-import Chart as C
-import Chart.Attributes as CA
 import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
 import Debug exposing (toString)
@@ -15,7 +12,6 @@ import Element.Font
 import Element.Input
 import History exposing (History)
 import Html exposing (Html)
-import List.Extra
 import Random
 import Session exposing (Session, SessionState)
 import SessionPlot exposing (plotSession)

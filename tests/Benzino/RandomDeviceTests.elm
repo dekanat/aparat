@@ -7,8 +7,7 @@ import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History
-import List.Extra
-import Random exposing (initialSeed)
+import Random
 import Result exposing (..)
 import Session exposing (Session)
 import Set
