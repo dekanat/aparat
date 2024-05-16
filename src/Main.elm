@@ -14,6 +14,7 @@ import History exposing (History)
 import Html exposing (Html)
 import Random
 import Session exposing (Session, SessionState)
+import SessionPlot exposing (plotSession)
 
 
 
@@ -81,6 +82,7 @@ rollResultsDisplay history =
         pictogramFor ( rolledA, rolledB ) =
             Element.row
                 [ Element.Font.size xxlSize
+                , Element.spacing 8
                 ]
                 [ Element.text (glyphFor rolledA)
                 , Element.text (glyphFor rolledB)
@@ -113,16 +115,38 @@ displayBenzinoScene { account, history } =
                 , onPress = Just (PlayerWantsToBet 1000)
                 }
     in
-    Element.column []
+    Element.column
+        [ Element.width (Element.px 520)
+        , Element.centerX
+        , Element.Border.width 2
+        , Element.Border.rounded 2
+        , Element.padding 32
+        , Element.spacing 8
+        ]
         [ Element.el
             [ Element.alignRight ]
             balanceDisplay
-        , rollResultsDisplay history
+        , Element.el
+            [ Element.centerX ]
+            (rollResultsDisplay history)
         , rollTrigger
         ]
 
 
 view : Model -> Html Msg
 view ( aggregates, _ ) =
-    Element.layout [ Element.padding 50 ]
-        (displayBenzinoScene aggregates)
+    Element.layout [] <|
+        Element.column
+            [ Element.width Element.fill
+            , Element.centerX
+            , Element.centerY
+            , Element.spaceEvenly
+            , Element.spacing 48
+            ]
+            [ displayBenzinoScene aggregates
+            , Element.el
+                [ Element.width Element.fill
+                , Element.padding 64
+                ]
+                (plotSession aggregates)
+            ]
