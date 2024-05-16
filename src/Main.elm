@@ -17,9 +17,9 @@ import Html exposing (Html)
 import List.Extra
 import Random
 import Session exposing (Session, SessionState)
+import SessionPlot exposing (plotSession)
 import Task exposing (..)
 import Time exposing (..)
-import SessionPlot exposing (plotSession)
 
 
 
@@ -174,4 +174,3 @@ view model =
                     [ displayBenzinoScene aggregates
                     , plotSession aggregates
                     ]
-
