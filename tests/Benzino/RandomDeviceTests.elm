@@ -1,8 +1,7 @@
 module Benzino.RandomDeviceTests exposing (..)
 
 import Account exposing (Account(..), AccountingProblem(..))
-import Benzino.Benzino exposing (DiceRoll, rollingPairOfDice)
-import Benzino.Die exposing (Face(..))
+import Benzino.Device exposing (DiceRoll, Face(..), fairDiceRoll)
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History
@@ -61,7 +60,7 @@ compoundTest =
                     randomLoop _ ( events, currentSeed ) =
                         let
                             ( event, nextSeed ) =
-                                Random.step rollingPairOfDice currentSeed
+                                Random.step fairDiceRoll currentSeed
                         in
                         ( event :: events, nextSeed )
 

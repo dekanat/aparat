@@ -1,7 +1,6 @@
 module Benzino.View exposing (..)
 
-import Benzino.Benzino exposing (DiceRoll)
-import Benzino.Die exposing (Face(..))
+import Benzino.Device exposing (DiceRoll, Face(..))
 import Element
 import Element.Font
 

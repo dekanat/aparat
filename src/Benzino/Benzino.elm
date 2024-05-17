@@ -1,18 +1,9 @@
 module Benzino.Benzino exposing (..)
 
-import Benzino.Die exposing (Face, rollingDie)
+import Benzino.Device exposing (DiceRoll, fairDiceRoll)
 import Common.Money exposing (Money)
 import Random exposing (..)
 import Round exposing (..)
-
-
-type alias DiceRoll =
-    ( Face, Face )
-
-
-rollingPairOfDice : Random.Generator DiceRoll
-rollingPairOfDice =
-    Random.pair rollingDie rollingDie
 
 
 calculatePayout : Money -> DiceRoll -> Money
@@ -25,4 +16,4 @@ calculatePayout betAmount ( rolledA, rolledB ) =
 
 
 benzino =
-    GameOfChance rollingPairOfDice calculatePayout
+    GameOfChance fairDiceRoll calculatePayout

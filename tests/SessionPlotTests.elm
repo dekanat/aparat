@@ -1,7 +1,7 @@
 module SessionPlotTests exposing (..)
 
 import Account exposing (Account(..))
-import Benzino.Die exposing (Face(..))
+import Benzino.Device exposing (Face(..))
 import Expect exposing (..)
 import History
 import Random exposing (initialSeed)

@@ -1,7 +1,7 @@
 module Benzino.PayoutLogicTests exposing (..)
 
 import Benzino.Benzino
-import Benzino.Die exposing (Face(..))
+import Benzino.Device exposing (Face(..))
 import Expect exposing (..)
 import Fuzz exposing (..)
 import Test exposing (..)

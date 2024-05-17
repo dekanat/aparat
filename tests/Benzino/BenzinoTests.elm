@@ -1,8 +1,7 @@
 module Benzino.BenzinoTests exposing (..)
 
 import Account exposing (Account(..), AccountingProblem(..))
-import Benzino.Benzino exposing (DiceRoll)
-import Benzino.Die exposing (Face(..))
+import Benzino.Device exposing (DiceRoll)
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History

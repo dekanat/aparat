@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Account exposing (Account(..))
 import Benzino.Benzino
+import Benzino.Device
 import Benzino.View
 import Browser
 import Common.Money exposing (Money)
@@ -36,7 +37,7 @@ main =
 
 
 type alias Model =
-    Session Benzino.Benzino.DiceRoll
+    Session Benzino.Device.DiceRoll
 
 
 type Msg
@@ -72,7 +73,7 @@ init _ =
     )
 
 
-displayGameScene : SessionState Benzino.Benzino.DiceRoll -> Element.Element Msg
+displayGameScene : SessionState Benzino.Device.DiceRoll -> Element.Element Msg
 displayGameScene { account, history } =
     let
         balanceDisplay =
