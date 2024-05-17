@@ -39,13 +39,13 @@ main =
 
 type alias Model =
     { session : Session Benzino.RoundDetails
-    , initialRandomSeed : Time.Posix
+    , startTime : Time.Posix
     }
 
 
 type Msg
     = PlayerSubmittedBet Money
-    | SessionStarted Time.Posix
+    | SessionInitiated Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -54,19 +54,19 @@ update msg session =
         PlayerSubmittedBet moneyToBet ->
             case Benzino.playOnce moneyToBet session.session of
                 Ok ctx ->
-                    ( { session = ctx, initialRandomSeed = session.initialRandomSeed }
+                    ( { session = ctx, startTime = session.startTime }
                     , Cmd.none
                     )
 
                 Err _ ->
                     ( session, Cmd.none )
 
-        SessionStarted time ->
+        SessionInitiated time ->
             ( { session =
                     ( Tuple.first session.session
                     , Random.initialSeed (Time.posixToMillis time)
                     )
-              , initialRandomSeed = time
+              , startTime = time
               }
             , Cmd.none
             )
@@ -74,7 +74,7 @@ update msg session =
 
 initiateSession : Cmd Msg
 initiateSession =
-    Task.perform SessionStarted Time.now
+    Task.perform SessionInitiated Time.now
 
 
 
@@ -89,7 +89,7 @@ init _ =
               }
             , Random.initialSeed 0
             )
-      , initialRandomSeed = Time.millisToPosix 0
+      , startTime = Time.millisToPosix 0
       }
     , initiateSession
     )
