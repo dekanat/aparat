@@ -15,6 +15,8 @@ import Html exposing (Html)
 import Random
 import Session exposing (Session, SessionState)
 import SessionPlot exposing (plotSession)
+import Task exposing (..)
+import Time exposing (..)
 
 
 
@@ -36,25 +38,43 @@ main =
 
 
 type alias Model =
-    Session Benzino.RoundDetails
+    { session : Session Benzino.RoundDetails
+    , startTime : Time.Posix
+    }
 
 
 type Msg
-    = PlayerWantsToBet Money
+    = PlayerSubmittedBet Money
+    | SessionInitiated Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case msg of
-        PlayerWantsToBet moneyToBet ->
-            case Benzino.playOnce moneyToBet session of
+        PlayerSubmittedBet moneyToBet ->
+            case Benzino.playOnce moneyToBet session.session of
                 Ok ctx ->
-                    ( ctx
+                    ( { session = ctx, startTime = session.startTime }
                     , Cmd.none
                     )
 
                 Err _ ->
                     ( session, Cmd.none )
+
+        SessionInitiated time ->
+            ( { session =
+                    ( Tuple.first session.session
+                    , Random.initialSeed (Time.posixToMillis time)
+                    )
+              , startTime = time
+              }
+            , Cmd.none
+            )
+
+
+initiateSession : Cmd Msg
+initiateSession =
+    Task.perform SessionInitiated Time.now
 
 
 
@@ -63,12 +83,15 @@ update msg session =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( ( { history = History.empty
-        , account = Account 3000
-        }
-      , Random.initialSeed 0
-      )
-    , Cmd.none
+    ( { session =
+            ( { history = History.empty
+              , account = Account 10000
+              }
+            , Random.initialSeed 0
+            )
+      , startTime = Time.millisToPosix 0
+      }
+    , initiateSession
     )
 
 
@@ -112,7 +135,7 @@ displayBenzinoScene { account, history } =
                 , Element.padding 8
                 ]
                 { label = Element.text "Roll for 1000"
-                , onPress = Just (PlayerWantsToBet 1000)
+                , onPress = Just (PlayerSubmittedBet 1000)
                 }
     in
     Element.column
@@ -134,19 +157,17 @@ displayBenzinoScene { account, history } =
 
 
 view : Model -> Html Msg
-view ( aggregates, _ ) =
-    Element.layout [] <|
-        Element.column
-            [ Element.width Element.fill
-            , Element.centerX
-            , Element.centerY
-            , Element.spaceEvenly
-            , Element.spacing 48
-            ]
-            [ displayBenzinoScene aggregates
-            , Element.el
-                [ Element.width Element.fill
-                , Element.padding 64
-                ]
-                (plotSession aggregates)
-            ]
+view model =
+    case model.session of
+        ( aggregates, _ ) ->
+            Element.layout [] <|
+                Element.column
+                    [ Element.width Element.fill
+                    , Element.centerX
+                    , Element.centerY
+                    , Element.spaceEvenly
+                    , Element.spacing 48
+                    ]
+                    [ displayBenzinoScene aggregates
+                    , plotSession aggregates
+                    ]
