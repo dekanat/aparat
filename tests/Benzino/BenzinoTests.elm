@@ -1,11 +1,12 @@
 module Benzino.BenzinoTests exposing (..)
 
 import Account exposing (Account(..), AccountingProblem(..))
-import Benzino exposing (..)
+import Benzino exposing (DiceRoll)
 import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History
+import Medium exposing (..)
 import Random exposing (initialSeed)
 import Result exposing (..)
 import Session exposing (Session)
@@ -23,14 +24,14 @@ type alias SessionStrategy =
 randomSession :
     SessionStrategy
     -> Random.Seed
-    -> Session Benzino.RoundDetails
+    -> Session DiceRoll
 randomSession config seed =
     let
         isGoodToExit ( { account }, _ ) =
             account |> Account.hasAtLeast config.desiredBalance
 
         loop currentState =
-            case Benzino.playOnce config.betAmount currentState of
+            case Medium.playOnce config.betAmount currentState of
                 Ok evolvedState ->
                     if isGoodToExit evolvedState then
                         evolvedState

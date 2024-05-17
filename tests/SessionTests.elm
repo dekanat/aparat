@@ -1,14 +1,14 @@
 module SessionTests exposing (..)
 
 import Account exposing (Account(..))
-import Aparat exposing (DiceRoll)
+import Benzino exposing (DiceRoll)
 import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History
 import List.Extra
 import Random exposing (initialSeed)
-import Round exposing (Round)
+import Round exposing (RoundOverview)
 import Session exposing (SessionState)
 import Test exposing (..)
 
@@ -36,7 +36,7 @@ sessionOperations =
         , test "replay past events" <|
             \() ->
                 let
-                    stubLoseNo : Int -> Round DiceRoll
+                    stubLoseNo : Int -> RoundOverview DiceRoll
                     stubLoseNo idx =
                         { seed = initialSeed idx
                         , details = ( Yek, Du )
@@ -61,7 +61,7 @@ sessionOperations =
                         , account = Account 6000
                         }
 
-                    replay : (( Money, Round a ) -> b) -> SessionState a -> List b
+                    replay : (( Money, RoundOverview a ) -> b) -> SessionState a -> List b
                     replay mapper currentState =
                         let
                             adjustBalanceDynamics ( balanceBeforeEvent, event ) =

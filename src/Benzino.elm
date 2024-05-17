@@ -1,40 +1,28 @@
 module Benzino exposing (..)
 
-import Account exposing (Account(..))
-import Aparat exposing (DiceRoll)
+import Common.Die exposing (Face, rollingDie)
 import Common.Money exposing (Money)
-import History
-import Random
-import Round exposing (Round)
-import Session exposing (Session, SessionProblem(..), SessionState)
+import Random exposing (..)
+import Round exposing (..)
 
 
-type alias RoundDetails =
-    DiceRoll
+type alias DiceRoll =
+    ( Face, Face )
 
 
-playOnce : Money -> Session DiceRoll -> Result SessionProblem (Session DiceRoll)
-playOnce amountToBet ( aggregates, seed ) =
-    let
-        settleSessionState accountAfterBet =
-            let
-                settleRound : DiceRoll -> Round DiceRoll
-                settleRound roll =
-                    roll
-                        |> Aparat.calculatePayout amountToBet
-                        |> Round seed roll amountToBet
+rollingPairOfDice : Random.Generator DiceRoll
+rollingPairOfDice =
+    Random.pair rollingDie rollingDie
 
-                evolveState : Round DiceRoll -> SessionState DiceRoll
-                evolveState event =
-                    { history = aggregates.history |> History.add event
-                    , account = accountAfterBet |> Account.add event.payout
-                    }
-            in
-            seed
-                |> Random.step Aparat.rollingPairOfDice
-                |> Tuple.mapFirst (settleRound >> evolveState)
-    in
-    aggregates.account
-        |> Account.deduct amountToBet
-        |> Result.mapError (\_ -> NonRecoverable)
-        |> Result.map settleSessionState
+
+calculatePayout : Money -> DiceRoll -> Money
+calculatePayout betAmount ( rolledA, rolledB ) =
+    if rolledA == rolledB then
+        betAmount * 6
+
+    else
+        0
+
+
+benzino =
+    GameOfChance rollingPairOfDice calculatePayout

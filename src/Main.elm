@@ -12,6 +12,7 @@ import Element.Font
 import Element.Input
 import History exposing (History)
 import Html exposing (Html)
+import Medium
 import Random
 import Session exposing (Session, SessionState)
 import SessionPlot exposing (plotSession)
@@ -36,7 +37,7 @@ main =
 
 
 type alias Model =
-    Session Benzino.RoundDetails
+    Session Benzino.DiceRoll
 
 
 type Msg
@@ -47,7 +48,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case msg of
         PlayerWantsToBet moneyToBet ->
-            case Benzino.playOnce moneyToBet session of
+            case Medium.playOnce moneyToBet session of
                 Ok ctx ->
                     ( ctx
                     , Cmd.none
@@ -72,8 +73,8 @@ init _ =
     )
 
 
-rollResultsDisplay : History Benzino.RoundDetails -> Element.Element Msg
-rollResultsDisplay history =
+benzinoResultsDisplay : History Benzino.DiceRoll -> Element.Element Msg
+benzinoResultsDisplay history =
     let
         xxlSize =
             200
@@ -96,8 +97,8 @@ rollResultsDisplay history =
             pictogramFor details
 
 
-displayBenzinoScene : SessionState Benzino.RoundDetails -> Element.Element Msg
-displayBenzinoScene { account, history } =
+displayGameScene : SessionState Benzino.DiceRoll -> Element.Element Msg
+displayGameScene { account, history } =
     let
         balanceDisplay =
             case account of
@@ -128,7 +129,7 @@ displayBenzinoScene { account, history } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (rollResultsDisplay history)
+            (benzinoResultsDisplay history)
         , rollTrigger
         ]
 
@@ -143,7 +144,7 @@ view ( aggregates, _ ) =
             , Element.spaceEvenly
             , Element.spacing 48
             ]
-            [ displayBenzinoScene aggregates
+            [ displayGameScene aggregates
             , Element.el
                 [ Element.width Element.fill
                 , Element.padding 64

@@ -4,7 +4,7 @@ import Common.Money exposing (Money)
 import Expect
 import Fuzz exposing (int)
 import Random
-import Round exposing (Round)
+import Round exposing (GameOfChance, RoundOverview)
 import Test exposing (Test, describe)
 
 
@@ -67,32 +67,8 @@ calculatePayout bet outcome =
             0
 
 
-type alias GameOfChance e =
-    { generator : Random.Generator e
-    , calculate : Money -> e -> Money
-    }
-
-
-type alias RoundOutcome e =
-    { event : e
-    , payout : Money
-    }
-
-
 friendlyCoinGame : GameOfChance Face
 friendlyCoinGame =
-    { generator = fairCoinFlip
-    , calculate = calculatePayout
+    { produceEvent = fairCoinFlip
+    , derivePayout = calculatePayout
     }
-
-
-playOnce : GameOfChance e -> Money -> Random.Seed -> ( RoundOutcome e, Random.Seed )
-playOnce { generator, calculate } bet seed =
-    let
-        ( event, nextSeed ) =
-            Random.step generator seed
-
-        payout =
-            calculate bet event
-    in
-    ( RoundOutcome event payout, nextSeed )
