@@ -170,5 +170,6 @@ view model =
                     , Element.spacing 48
                     ]
                     [ displayBenzinoScene aggregates
-                    , plotSession aggregates
+
+                    -- , plotSession aggregates
                     ]
