@@ -13,7 +13,7 @@ import Element.Input
 import History exposing (History)
 import Html exposing (Html)
 import Random
-import Session exposing (Session, SessionState)
+import Session exposing (Sess(..), Session, SessionState)
 import SessionPlot exposing (plotSession)
 import Task exposing (..)
 import Time exposing (..)
@@ -38,9 +38,7 @@ main =
 
 
 type alias Model =
-    { session : Session Benzino.RoundDetails
-    , startTime : Time.Posix
-    }
+    Sess Benzino.RoundDetails
 
 
 type Msg
@@ -50,26 +48,33 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
-    case msg of
-        PlayerSubmittedBet moneyToBet ->
-            case Benzino.playOnce moneyToBet session.session of
-                Ok ctx ->
-                    ( { session = ctx, startTime = session.startTime }
+    case ( session, msg ) of
+        ( LoadingSession, SessionInitiated time ) ->
+            let
+                firstSeed =
+                    Random.initialSeed (Time.posixToMillis time)
+
+                freshSession =
+                    CurrentSession
+                        { history = []
+                        , account = Account 10000
+                        }
+                        firstSeed
+            in
+            ( freshSession, Cmd.none )
+
+        ( CurrentSession state seed, PlayerSubmittedBet moneyToBet ) ->
+            case Benzino.playOnce moneyToBet ( state, seed ) of
+                Ok ( ctx, nextSeed ) ->
+                    ( CurrentSession ctx nextSeed
                     , Cmd.none
                     )
 
                 Err _ ->
                     ( session, Cmd.none )
 
-        SessionInitiated time ->
-            ( { session =
-                    ( Tuple.first session.session
-                    , Random.initialSeed (Time.posixToMillis time)
-                    )
-              , startTime = time
-              }
-            , Cmd.none
-            )
+        _ ->
+            ( LoadingSession, Cmd.none )
 
 
 initiateSession : Cmd Msg
@@ -83,14 +88,7 @@ initiateSession =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { session =
-            ( { history = History.empty
-              , account = Account 10000
-              }
-            , Random.initialSeed 0
-            )
-      , startTime = Time.millisToPosix 0
-      }
+    ( LoadingSession
     , initiateSession
     )
 
@@ -158,8 +156,11 @@ displayBenzinoScene { account, history } =
 
 view : Model -> Html Msg
 view model =
-    case model.session of
-        ( aggregates, _ ) ->
+    case model of
+        LoadingSession ->
+            Element.layout [] Element.none
+
+        CurrentSession aggregates _ ->
             Element.layout [] <|
                 Element.column
                     [ Element.width Element.fill

@@ -11,6 +11,15 @@ type alias Session outcomes =
     ( SessionState outcomes, Random.Seed )
 
 
+type Sess e
+    = LoadingSession
+    | CurrentSession
+        { history : History e
+        , account : Account
+        }
+        Random.Seed
+
+
 type alias SessionState outcomes =
     { history : History outcomes
     , account : Account
