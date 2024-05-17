@@ -67,6 +67,32 @@ calculatePayout bet outcome =
             0
 
 
-playOnce : Random.Generator a -> (Money -> a -> Money) -> Money -> Random.Seed -> Round a
-playOnce =
-    Debug.todo "play once"
+type alias GameOfChance e =
+    { generator : Random.Generator e
+    , calculate : Money -> e -> Money
+    }
+
+
+type alias RoundOutcome e =
+    { event : e
+    , payout : Money
+    }
+
+
+friendlyCoinGame : GameOfChance Face
+friendlyCoinGame =
+    { generator = fairCoinFlip
+    , calculate = calculatePayout
+    }
+
+
+playOnce : GameOfChance e -> Money -> Random.Seed -> ( RoundOutcome e, Random.Seed )
+playOnce { generator, calculate } bet seed =
+    let
+        ( event, nextSeed ) =
+            Random.step generator seed
+
+        payout =
+            calculate bet event
+    in
+    ( RoundOutcome event payout, nextSeed )
