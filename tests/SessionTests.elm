@@ -1,8 +1,8 @@
 module SessionTests exposing (..)
 
 import Account exposing (Account(..))
-import Benzino exposing (DiceRoll)
-import Common.Die exposing (Face(..))
+import Benzino.Benzino exposing (DiceRoll)
+import Benzino.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History

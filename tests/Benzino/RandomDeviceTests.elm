@@ -1,8 +1,8 @@
 module Benzino.RandomDeviceTests exposing (..)
 
 import Account exposing (Account(..), AccountingProblem(..))
-import Benzino exposing (DiceRoll, rollingPairOfDice)
-import Common.Die exposing (Face(..))
+import Benzino.Benzino exposing (DiceRoll, rollingPairOfDice)
+import Benzino.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History

@@ -1,7 +1,7 @@
 module Medium exposing (..)
 
 import Account exposing (Account(..))
-import Benzino exposing (DiceRoll, benzino)
+import Benzino.Benzino exposing (DiceRoll, benzino)
 import Common.Money exposing (Money)
 import History
 import Round exposing (playRound)

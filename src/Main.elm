@@ -1,16 +1,15 @@
 module Main exposing (..)
 
 import Account exposing (Account(..))
-import Benzino
+import Benzino.Benzino
+import Benzino.View
 import Browser
-import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
 import Debug exposing (toString)
 import Element
 import Element.Border
-import Element.Font
 import Element.Input
-import History exposing (History)
+import History
 import Html exposing (Html)
 import Medium
 import Random
@@ -37,7 +36,7 @@ main =
 
 
 type alias Model =
-    Session Benzino.DiceRoll
+    Session Benzino.Benzino.DiceRoll
 
 
 type Msg
@@ -73,31 +72,7 @@ init _ =
     )
 
 
-benzinoResultsDisplay : History Benzino.DiceRoll -> Element.Element Msg
-benzinoResultsDisplay history =
-    let
-        xxlSize =
-            200
-
-        pictogramFor : ( Face, Face ) -> Element.Element Msg
-        pictogramFor ( rolledA, rolledB ) =
-            Element.row
-                [ Element.Font.size xxlSize
-                , Element.spacing 8
-                ]
-                [ Element.text (glyphFor rolledA)
-                , Element.text (glyphFor rolledB)
-                ]
-    in
-    case History.last history of
-        Nothing ->
-            pictogramFor ( Shesh, Yek )
-
-        Just { details } ->
-            pictogramFor details
-
-
-displayGameScene : SessionState Benzino.DiceRoll -> Element.Element Msg
+displayGameScene : SessionState Benzino.Benzino.DiceRoll -> Element.Element Msg
 displayGameScene { account, history } =
     let
         balanceDisplay =
@@ -129,7 +104,10 @@ displayGameScene { account, history } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (benzinoResultsDisplay history)
+            (History.last history
+                |> Maybe.map .details
+                |> Benzino.View.benzinoResultsDisplay { size = 200 }
+            )
         , rollTrigger
         ]
 

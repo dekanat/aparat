@@ -1,7 +1,7 @@
 module Benzino.PayoutLogicTests exposing (..)
 
-import Benzino
-import Common.Die exposing (Face(..))
+import Benzino.Benzino
+import Benzino.Die exposing (Face(..))
 import Expect exposing (..)
 import Fuzz exposing (..)
 import Test exposing (..)
@@ -13,11 +13,11 @@ aparatTests =
         [ describe "Determine Payout"
             [ test "that apprat notifies of wins" <|
                 \() ->
-                    Benzino.calculatePayout 100 ( Panj, Panj )
+                    Benzino.Benzino.calculatePayout 100 ( Panj, Panj )
                         |> Expect.equal 600
             , test "that apprat notifies of lose" <|
                 \() ->
-                    Benzino.calculatePayout 100 ( Panj, Yek )
+                    Benzino.Benzino.calculatePayout 100 ( Panj, Yek )
                         |> Expect.equal 0
             ]
         ]
