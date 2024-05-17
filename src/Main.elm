@@ -93,8 +93,8 @@ init _ =
     )
 
 
-rollResultsDisplay : History Benzino.RoundDetails -> Element.Element Msg
-rollResultsDisplay history =
+rollResultsDisplay : Maybe Benzino.RoundDetails -> Element.Element Msg
+rollResultsDisplay lastEvent =
     let
         xxlSize =
             200
@@ -109,11 +109,11 @@ rollResultsDisplay history =
                 , Element.text (glyphFor rolledB)
                 ]
     in
-    case History.last history of
+    case lastEvent of
         Nothing ->
             pictogramFor ( Shesh, Yek )
 
-        Just { details } ->
+        Just details ->
             pictogramFor details
 
 
@@ -149,7 +149,7 @@ displayBenzinoScene { account, history } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (rollResultsDisplay history)
+            (history |> History.last |> Maybe.map .details |> rollResultsDisplay)
         , rollTrigger
         ]
 
