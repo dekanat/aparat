@@ -44,14 +44,14 @@ type alias Model =
 
 
 type Msg
-    = PlayerWantsToBet Money
-    | FreshSeed Time.Posix
+    = PlayerSubmittedBet Money
+    | SessionStarted Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case msg of
-        PlayerWantsToBet moneyToBet ->
+        PlayerSubmittedBet moneyToBet ->
             case Benzino.playOnce moneyToBet session.session of
                 Ok ctx ->
                     ( { session = ctx, initialRandomSeed = session.initialRandomSeed }
@@ -61,7 +61,7 @@ update msg session =
                 Err _ ->
                     ( session, Cmd.none )
 
-        FreshSeed time ->
+        SessionStarted time ->
             ( { session =
                     ( Tuple.first session.session
                     , Random.initialSeed (Time.posixToMillis time)
@@ -72,9 +72,9 @@ update msg session =
             )
 
 
-getFreshSeed : Cmd Msg
-getFreshSeed =
-    Task.perform FreshSeed Time.now
+initiateSession : Cmd Msg
+initiateSession =
+    Task.perform SessionStarted Time.now
 
 
 
@@ -91,7 +91,7 @@ init _ =
             )
       , initialRandomSeed = Time.millisToPosix 0
       }
-    , getFreshSeed
+    , initiateSession
     )
 
 
@@ -135,7 +135,7 @@ displayBenzinoScene { account, history } =
                 , Element.padding 8
                 ]
                 { label = Element.text "Roll for 1000"
-                , onPress = Just (PlayerWantsToBet 1000)
+                , onPress = Just (PlayerSubmittedBet 1000)
                 }
     in
     Element.column
