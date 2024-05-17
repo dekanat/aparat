@@ -1,8 +1,10 @@
 module CoinTests exposing (..)
 
+import Common.Money exposing (Money)
 import Expect
 import Fuzz exposing (int)
 import Random
+import Round exposing (Round)
 import Test exposing (Test, describe)
 
 
@@ -53,3 +55,18 @@ fairCoinTests =
                             |> Expect.within (Expect.Absolute 0.01) 1
                 ]
         ]
+
+
+calculatePayout : Money -> Face -> Money
+calculatePayout bet outcome =
+    case outcome of
+        Xush ->
+            bet * 2
+
+        _ ->
+            0
+
+
+playOnce : Random.Generator a -> (Money -> a -> Money) -> Money -> Random.Seed -> Round a
+playOnce =
+    Debug.todo "play once"
