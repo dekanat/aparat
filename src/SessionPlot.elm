@@ -1,9 +1,12 @@
 module SessionPlot exposing (..)
 
+import Account
 import Chart as C
-import Chart.Attributes as CA exposing (window)
-import Common.Helpers exposing (slidingWindow)
+import Chart.Attributes as CA
+import Common.Helpers exposing (slidingPair)
+import Common.Money exposing (Money)
 import Element exposing (..)
+import List.Extra
 import Session exposing (SessionState)
 
 
@@ -25,19 +28,13 @@ type PlotElement
     | Sliding ( BalancePoint, BalancePoint )
 
 
-slidingPair : List a -> List ( a, a )
-slidingPair list =
-    list
-        |> slidingWindow 2
-        |> List.filterMap
-            (\window ->
-                case window of
-                    [ a, b ] ->
-                        Just ( a, b )
-
-                    _ ->
-                        Nothing
-            )
+balanceSettledThrough : SessionState e -> List Money
+balanceSettledThrough { history, account } =
+    let
+        recoverEarlier event balanceAfterEvent =
+            balanceAfterEvent - event.payout + event.bet
+    in
+    history |> List.Extra.scanr recoverEarlier (Account.balanceOf account)
 
 
 scatterIndicators plottedBalance =
@@ -88,8 +85,7 @@ plotSession : SessionState e -> Element msg
 plotSession currentState =
     let
         balanceFlow =
-            currentState
-                |> Session.balanceSettledThrough
+            balanceSettledThrough currentState
 
         plottedBalance =
             balanceFlow

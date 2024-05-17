@@ -4,7 +4,7 @@ import Common.Money exposing (Money)
 import Expect
 import Fuzz exposing (int)
 import Random
-import Round exposing (GameOfChance, RoundOverview)
+import Round exposing (GameOfChance)
 import Test exposing (Test, describe)
 
 
