@@ -15,43 +15,6 @@ import Test exposing (..)
 import Time exposing (Weekday(..))
 
 
-type alias SessionStrategy =
-    { initialBalance : Money
-    , betAmount : Money
-    , desiredBalance : Money
-    }
-
-
-randomSession :
-    SessionStrategy
-    -> Random.Seed
-    -> Session Benzino.RoundDetails
-randomSession config seed =
-    let
-        isGoodToExit ( { account }, _ ) =
-            account |> Account.hasAtLeast config.desiredBalance
-
-        loop currentState =
-            case Benzino.playOnce config.betAmount currentState of
-                Ok evolvedState ->
-                    if isGoodToExit evolvedState then
-                        evolvedState
-
-                    else
-                        loop evolvedState
-
-                Err _ ->
-                    currentState
-
-        commonStarterState =
-            { history = History.empty
-            , account = Account config.initialBalance
-            }
-    in
-    loop
-        ( commonStarterState, seed )
-
-
 compoundTest : Test
 compoundTest =
     describe "Random Device fo benzino"

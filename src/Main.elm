@@ -13,7 +13,7 @@ import Element.Input
 import History exposing (History)
 import Html exposing (Html)
 import Random
-import Session exposing (Sess(..), Session, SessionState)
+import Session exposing (Sess(..), SessionProblem(..))
 import SessionPlot exposing (plotSession)
 import Task exposing (..)
 import Time exposing (..)
@@ -56,7 +56,7 @@ update msg session =
 
                 freshSession =
                     CurrentSession
-                        { history = []
+                        { lastEvent = Nothing
                         , account = Account 10000
                         }
                         firstSeed
@@ -64,9 +64,21 @@ update msg session =
             ( freshSession, Cmd.none )
 
         ( CurrentSession state seed, PlayerSubmittedBet moneyToBet ) ->
-            case Benzino.playOnce moneyToBet ( state, seed ) of
-                Ok ( ctx, nextSeed ) ->
-                    ( CurrentSession ctx nextSeed
+            case state.account |> Account.deduct moneyToBet of
+                Ok reducedAccount ->
+                    let
+                        ( outcome, nextSeed ) =
+                            Benzino.playRound moneyToBet seed
+
+                        settledAccount =
+                            reducedAccount |> Account.add outcome.payout
+                    in
+                    ( CurrentSession
+                        { state
+                            | account = settledAccount
+                            , lastEvent = Just outcome.event
+                        }
+                        nextSeed
                     , Cmd.none
                     )
 
@@ -117,8 +129,7 @@ rollResultsDisplay lastEvent =
             pictogramFor details
 
 
-displayBenzinoScene : SessionState Benzino.RoundDetails -> Element.Element Msg
-displayBenzinoScene { account, history } =
+displayBenzinoScene { account, lastEvent } =
     let
         balanceDisplay =
             case account of
@@ -149,7 +160,7 @@ displayBenzinoScene { account, history } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (history |> History.last |> Maybe.map .details |> rollResultsDisplay)
+            (lastEvent |> rollResultsDisplay)
         , rollTrigger
         ]
 

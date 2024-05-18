@@ -14,7 +14,7 @@ type alias Session outcomes =
 type Sess e
     = LoadingSession
     | CurrentSession
-        { history : History e
+        { lastEvent : Maybe e
         , account : Account
         }
         Random.Seed
