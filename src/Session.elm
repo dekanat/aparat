@@ -12,7 +12,7 @@ type alias Session outcomes =
 
 
 type Sess e
-    = LoadingSession
+    = NoSession
     | CurrentSession
         { lastEvent : Maybe e
         , account : Account

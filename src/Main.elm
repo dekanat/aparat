@@ -42,51 +42,56 @@ type alias Model =
 
 
 type Msg
-    = PlayerSubmittedBet Money
-    | SessionInitiated Time.Posix
+    = SessionInitiated Time.Posix
+    | BetSubmitted Money
+
+
+initialSessionWith : Random.Seed -> Sess e
+initialSessionWith =
+    CurrentSession
+        { lastEvent = Nothing
+        , account = Account 10000
+        }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case ( session, msg ) of
-        ( LoadingSession, SessionInitiated time ) ->
+        ( NoSession, SessionInitiated time ) ->
             let
                 firstSeed =
-                    Random.initialSeed (Time.posixToMillis time)
-
-                freshSession =
-                    CurrentSession
-                        { lastEvent = Nothing
-                        , account = Account 10000
-                        }
-                        firstSeed
+                    time
+                        |> Time.posixToMillis
+                        |> Random.initialSeed
             in
-            ( freshSession, Cmd.none )
+            ( initialSessionWith firstSeed
+            , Cmd.none
+            )
 
-        ( CurrentSession state seed, PlayerSubmittedBet moneyToBet ) ->
+        ( CurrentSession state seed, BetSubmitted moneyToBet ) ->
             case state.account |> Account.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
-                        ( outcome, nextSeed ) =
-                            Benzino.playRound moneyToBet seed
+                        evolveState { payout, event } =
+                            { account = reducedAccount |> Account.add payout
+                            , lastEvent = Just event
+                            }
 
-                        settledAccount =
-                            reducedAccount |> Account.add outcome.payout
+                        ( settledState, nextSeed ) =
+                            Benzino.playRound moneyToBet seed
+                                |> Tuple.mapFirst evolveState
                     in
-                    ( CurrentSession
-                        { state
-                            | account = settledAccount
-                            , lastEvent = Just outcome.event
-                        }
-                        nextSeed
+                    ( CurrentSession settledState nextSeed
                     , Cmd.none
                     )
 
                 Err _ ->
-                    ( session, Cmd.none )
+                    ( session
+                    , Cmd.none
+                    )
 
         _ ->
-            ( LoadingSession, Cmd.none )
+            ( NoSession, Cmd.none )
 
 
 initiateSession : Cmd Msg
@@ -100,7 +105,7 @@ initiateSession =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( LoadingSession
+    ( NoSession
     , initiateSession
     )
 
@@ -144,7 +149,7 @@ displayBenzinoScene { account, lastEvent } =
                 , Element.padding 8
                 ]
                 { label = Element.text "Roll for 1000"
-                , onPress = Just (PlayerSubmittedBet 1000)
+                , onPress = Just (BetSubmitted 1000)
                 }
     in
     Element.column
@@ -168,7 +173,7 @@ displayBenzinoScene { account, lastEvent } =
 view : Model -> Html Msg
 view model =
     case model of
-        LoadingSession ->
+        NoSession ->
             Element.layout [] Element.none
 
         CurrentSession aggregates _ ->
