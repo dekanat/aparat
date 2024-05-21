@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Accounting exposing (Account(..))
+import Accounting exposing (Account(..), AccountingResult(..))
 import Benzino exposing (Face(..))
 import Browser
 import Common.Money exposing (Money)
@@ -66,6 +66,22 @@ update msg session =
             )
 
         ( CurrentSession state, BetSubmitted moneyToBet ) ->
+            let
+                ( account, exchange ) =
+                    state.account
+                        |> Accounting.update (Accounting.WithdrawalRequest 2000)
+
+                x =
+                    case exchange of
+                        Accounting.ToOthers (WithdrawalSuccess m) ->
+                            1
+
+                        Accounting.ToOthers WithdrawalFailure ->
+                            3
+
+                        Accounting.Request _ ->
+                            2
+            in
             case state.account |> Accounting.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
