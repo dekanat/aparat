@@ -3,18 +3,14 @@ module Main exposing (..)
 import Account exposing (Account(..))
 import Benzino
 import Browser
-import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
 import Debug exposing (toString)
 import Element
 import Element.Border
-import Element.Font
 import Element.Input
-import History exposing (History)
 import Html exposing (Html)
 import Random
-import Session exposing (Sess(..), SessionProblem(..))
-import SessionPlot exposing (plotSession)
+import Session exposing (Session(..), SessionProblem(..))
 import Task exposing (..)
 import Time exposing (..)
 
@@ -38,7 +34,7 @@ main =
 
 
 type alias Model =
-    Sess Benzino.RoundDetails
+    Session Benzino.RoundDetails
 
 
 type Msg
@@ -46,7 +42,7 @@ type Msg
     | BetSubmitted Money
 
 
-initialSessionWith : Random.Seed -> Sess e
+initialSessionWith : Random.Seed -> Session e
 initialSessionWith =
     CurrentSession
         { lastEvent = Nothing
@@ -162,6 +158,4 @@ view model =
                     , Element.spacing 48
                     ]
                     [ displayBenzinoScene aggregates
-
-                    -- , plotSession aggregates
                     ]

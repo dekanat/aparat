@@ -4,12 +4,9 @@ import Account exposing (Account(..), AccountingProblem(..))
 import Aparat exposing (rollingPairOfDice)
 import Benzino exposing (..)
 import Common.Die exposing (Face(..))
-import Common.Money exposing (Money)
 import Expect exposing (..)
-import History
 import Random
 import Result exposing (..)
-import Session exposing (Session)
 import Set
 import Test exposing (..)
 import Time exposing (Weekday(..))

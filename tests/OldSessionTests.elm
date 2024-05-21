@@ -1,16 +1,30 @@
-module SessionTests exposing (..)
+module OldSessionTests exposing (..)
 
 import Account exposing (Account(..))
 import Aparat exposing (DiceRoll)
 import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
-import History
+import History exposing (History)
 import List.Extra
 import Random exposing (initialSeed)
 import Round exposing (Round)
-import Session exposing (SessionState)
 import Test exposing (..)
+
+
+type alias SessionState outcomes =
+    { history : History outcomes
+    , account : Account
+    }
+
+
+balanceSettledThrough : SessionState e -> List Money
+balanceSettledThrough { history, account } =
+    let
+        recoverEarlier event balanceAfterEvent =
+            balanceAfterEvent - event.payout + event.bet
+    in
+    history |> List.Extra.scanr recoverEarlier (Account.balanceOf account)
 
 
 sessionOperations : Test
@@ -19,7 +33,7 @@ sessionOperations =
         [ describe "balance throughout session"
             [ test "empty history" <|
                 \() ->
-                    Session.balanceSettledThrough (SessionState History.empty (Account 10000))
+                    balanceSettledThrough (SessionState History.empty (Account 10000))
                         |> Expect.equal [ 10000 ]
             , test "rich history of events" <|
                 \() ->
@@ -30,7 +44,7 @@ sessionOperations =
                                 |> History.add { seed = initialSeed 2, bet = 1000, payout = 0, details = ( Yek, Du ) }
                                 |> History.add { seed = initialSeed 3, bet = 1000, payout = 6000, details = ( Yek, Yek ) }
                     in
-                    Session.balanceSettledThrough (SessionState richHistory (Account 10000))
+                    balanceSettledThrough (SessionState richHistory (Account 10000))
                         |> Expect.equal [ 7000, 6000, 5000, 10000 ]
             ]
         , test "replay past events" <|
@@ -51,7 +65,7 @@ sessionOperations =
                         , payout = 6000
                         }
 
-                    sessionState : Session.SessionState DiceRoll
+                    sessionState : SessionState DiceRoll
                     sessionState =
                         { history =
                             History.empty
@@ -69,7 +83,7 @@ sessionOperations =
 
                             mixedSequence =
                                 currentState.history
-                                    |> List.Extra.zip (Session.balanceSettledThrough currentState)
+                                    |> List.Extra.zip (balanceSettledThrough currentState)
                                     |> List.map adjustBalanceDynamics
                         in
                         mixedSequence
