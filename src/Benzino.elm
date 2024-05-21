@@ -71,11 +71,16 @@ update msg model =
 
 view : Model -> Element.Element Msg
 view { event } =
+    rollResultsDisplay (Just event)
+
+
+rollResultsDisplay : Maybe RoundDetails -> Element.Element msg
+rollResultsDisplay lastEvent =
     let
         xxlSize =
             200
 
-        pictogramFor : ( Face, Face ) -> Element.Element Msg
+        pictogramFor : ( Face, Face ) -> Element.Element msg
         pictogramFor ( rolledA, rolledB ) =
             Element.row
                 [ Element.Font.size xxlSize
@@ -85,4 +90,9 @@ view { event } =
                 , Element.text (glyphFor rolledB)
                 ]
     in
-    pictogramFor event
+    case lastEvent of
+        Nothing ->
+            pictogramFor ( Shesh, Yek )
+
+        Just details ->
+            pictogramFor details

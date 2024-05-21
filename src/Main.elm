@@ -110,30 +110,6 @@ init _ =
     )
 
 
-rollResultsDisplay : Maybe Benzino.RoundDetails -> Element.Element Msg
-rollResultsDisplay lastEvent =
-    let
-        xxlSize =
-            200
-
-        pictogramFor : ( Face, Face ) -> Element.Element Msg
-        pictogramFor ( rolledA, rolledB ) =
-            Element.row
-                [ Element.Font.size xxlSize
-                , Element.spacing 8
-                ]
-                [ Element.text (glyphFor rolledA)
-                , Element.text (glyphFor rolledB)
-                ]
-    in
-    case lastEvent of
-        Nothing ->
-            pictogramFor ( Shesh, Yek )
-
-        Just details ->
-            pictogramFor details
-
-
 displayBenzinoScene { account, lastEvent } =
     let
         balanceDisplay =
@@ -165,7 +141,7 @@ displayBenzinoScene { account, lastEvent } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (lastEvent |> rollResultsDisplay)
+            (lastEvent |> Benzino.rollResultsDisplay)
         , rollTrigger
         ]
 
