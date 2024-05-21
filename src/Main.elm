@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Account exposing (Account(..))
+import Accounting exposing (Account(..))
 import Benzino exposing (Face(..))
 import Browser
 import Common.Money exposing (Money)
@@ -66,7 +66,7 @@ update msg session =
             )
 
         ( CurrentSession state, BetSubmitted moneyToBet ) ->
-            case state.account |> Account.deduct moneyToBet of
+            case state.account |> Accounting.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
                         ( nextInnerGameState, innerCmd ) =
@@ -101,7 +101,7 @@ update msg session =
                         Benzino.ToOthers ogo ->
                             case ogo of
                                 Benzino.Payout x ->
-                                    ( { state | account = state.account |> Account.add x }, Cmd.none )
+                                    ( { state | account = state.account |> Accounting.add x }, Cmd.none )
             in
             ( CurrentSession nextState, cmd )
 

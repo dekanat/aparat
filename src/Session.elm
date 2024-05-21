@@ -1,6 +1,6 @@
 module Session exposing (..)
 
-import Account exposing (Account)
+import Accounting exposing (Account)
 import Benzino
 
 

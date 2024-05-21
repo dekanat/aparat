@@ -1,4 +1,4 @@
-module Account exposing (..)
+module Accounting exposing (..)
 
 import Common.Money exposing (Money)
 import Time exposing (Weekday(..))

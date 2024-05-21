@@ -1,6 +1,6 @@
-module AccountTests exposing (..)
+module AccountingTests exposing (..)
 
-import Account exposing (Account(..), AccountingOps(..), AccountingResult(..), Exchange(..))
+import Accounting exposing (Account(..), AccountingOps(..), AccountingResult(..), Exchange(..))
 import Expect exposing (..)
 import Test exposing (..)
 
@@ -11,7 +11,7 @@ accountingTests =
         [ describe "Recieving a withdrawal request"
             [ test "when the balance allows it" <|
                 \() ->
-                    Account.update (WithdrawalRequest 2000) (Account 3000)
+                    Accounting.update (WithdrawalRequest 2000) (Account 3000)
                         |> Expect.all
                             [ Expect.equal (Account 1000) << Tuple.first
                             , Expect.equal (ToOthers (WithdrawalSuccess 2000))
@@ -19,7 +19,7 @@ accountingTests =
                             ]
             , test "when the balance does not allow it" <|
                 \() ->
-                    Account.update (WithdrawalRequest 2000) (Account 1000)
+                    Accounting.update (WithdrawalRequest 2000) (Account 1000)
                         |> Expect.all
                             [ Expect.equal (Account 1000) << Tuple.first
                             , Expect.equal (ToOthers WithdrawalFailure)
@@ -37,7 +37,7 @@ playerAccountTests =
                 [ test "should increase balance correctly" <|
                     \() ->
                         Account 1000
-                            |> Account.add 1000
+                            |> Accounting.add 1000
                             |> Expect.equal (Account 2000)
                 ]
             , describe "deduct"
@@ -45,13 +45,13 @@ playerAccountTests =
                     \() ->
                         Account 1000
                             |> Expect.all
-                                [ Account.deduct 100 >> Expect.equal (Ok (Account 900))
-                                , Account.deduct 1000 >> Expect.equal (Ok (Account 0))
+                                [ Accounting.deduct 100 >> Expect.equal (Ok (Account 900))
+                                , Accounting.deduct 1000 >> Expect.equal (Ok (Account 0))
                                 ]
                 , test "should fail to reduce below zero" <|
                     \() ->
                         Account 1000
-                            |> Account.deduct 2000
+                            |> Accounting.deduct 2000
                             |> Expect.err
                 ]
             ]
@@ -60,9 +60,9 @@ playerAccountTests =
                 \() ->
                     Account 1000
                         |> Expect.all
-                            [ Account.hasAtLeast 500 >> Expect.equal True
-                            , Account.hasAtLeast 1000 >> Expect.equal True
-                            , Account.hasAtLeast 1500 >> Expect.equal False
+                            [ Accounting.hasAtLeast 500 >> Expect.equal True
+                            , Accounting.hasAtLeast 1000 >> Expect.equal True
+                            , Accounting.hasAtLeast 1500 >> Expect.equal False
                             ]
             ]
         ]
