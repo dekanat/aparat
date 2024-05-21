@@ -2,7 +2,6 @@ module Session exposing (..)
 
 import Account exposing (Account)
 import Benzino
-import Random
 
 
 type Session e

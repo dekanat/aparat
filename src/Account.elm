@@ -1,6 +1,21 @@
 module Account exposing (..)
 
 import Common.Money exposing (Money)
+import Time exposing (Weekday(..))
+
+
+type AccountingOps
+    = WithdrawalRequest Money
+
+
+type AccountingResult
+    = WithdrawalSuccess Money
+    | WithdrawalFailure
+
+
+type Exchange
+    = Request AccountingOps
+    | ToOthers AccountingResult
 
 
 type Account
@@ -16,6 +31,20 @@ add amount account =
 
 type AccountingProblem
     = InsufficientBalance
+
+
+update : AccountingOps -> Account -> ( Account, Exchange )
+update msg account =
+    case msg of
+        WithdrawalRequest amount ->
+            case deduct amount account of
+                Ok newAccount ->
+                    ( newAccount
+                    , ToOthers (WithdrawalSuccess 2000)
+                    )
+
+                Err _ ->
+                    ( account, ToOthers WithdrawalFailure )
 
 
 deduct : Money -> Account -> Result AccountingProblem Account
