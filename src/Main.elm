@@ -3,6 +3,7 @@ module Main exposing (..)
 import Account exposing (Account(..))
 import Benzino
 import Browser
+import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Debug exposing (toString)
 import Element
@@ -43,11 +44,17 @@ type Msg
 
 
 initialSessionWith : Random.Seed -> Session e
-initialSessionWith =
+initialSessionWith seed =
     CurrentSession
         { lastEvent = Nothing
         , account = Account 10000
+        , innerGame =
+            { seed = seed
+            , bet = 0
+            , event = ( Yek, Yek )
+            }
         }
+        seed
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -69,8 +76,9 @@ update msg session =
                 Ok reducedAccount ->
                     let
                         evolveState { payout, event } =
-                            { account = reducedAccount |> Account.add payout
-                            , lastEvent = Just event
+                            { state
+                                | account = reducedAccount |> Account.add payout
+                                , lastEvent = Just event
                             }
 
                         ( settledState, nextSeed ) =
