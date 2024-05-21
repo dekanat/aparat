@@ -21,18 +21,6 @@ type alias RoundOutcome e =
     }
 
 
-playRound : Money -> Random.Seed -> ( RoundOutcome DiceRoll, Random.Seed )
-playRound bet seed =
-    seed
-        |> Random.step Aparat.rollingPairOfDice
-        |> Tuple.mapFirst
-            (\event ->
-                { event = event
-                , payout = Aparat.calculatePayout bet event
-                }
-            )
-
-
 type Msg
     = BetPlaced Money
     | DiceRolled RoundDetails

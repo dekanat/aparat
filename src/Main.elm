@@ -41,7 +41,6 @@ type alias Model =
 type Msg
     = SessionInitiated Time.Posix
     | BetSubmitted Money
-    | PayoutCollected Money
     | InnerTalk Benzino.TalkTheTalk
 
 
@@ -55,7 +54,6 @@ initialSessionWith seed =
             , event = ( Yek, Yek )
             }
         }
-        seed
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -72,27 +70,21 @@ update msg session =
             , Cmd.none
             )
 
-        ( CurrentSession state seed, BetSubmitted moneyToBet ) ->
+        ( CurrentSession state, BetSubmitted moneyToBet ) ->
             case state.account |> Account.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
                         ( nextInnerGameState, innerCmd ) =
                             state.innerGame |> Benzino.update (Benzino.BetPlaced moneyToBet)
 
-                        evolveState _ =
+                        nextState =
                             { state
                                 | account = reducedAccount
                                 , innerGame =
-                                    state.innerGame
-                                        |> Benzino.update (Benzino.BetPlaced moneyToBet)
-                                        |> Tuple.first
+                                    nextInnerGameState
                             }
-
-                        ( settledState, nextSeed ) =
-                            Benzino.playRound moneyToBet seed
-                                |> Tuple.mapFirst evolveState
                     in
-                    ( CurrentSession settledState nextSeed
+                    ( CurrentSession nextState
                     , innerCmd |> Cmd.map InnerTalk
                     )
 
@@ -101,7 +93,7 @@ update msg session =
                     , Cmd.none
                     )
 
-        ( CurrentSession state seed, InnerTalk innerMsg ) ->
+        ( CurrentSession state, InnerTalk innerMsg ) ->
             let
                 ( nextState, cmd ) =
                     case innerMsg of
@@ -115,26 +107,8 @@ update msg session =
                             case ogo of
                                 Benzino.Payout x ->
                                     ( { state | account = state.account |> Account.add x }, Cmd.none )
-
-                -- nextState =
-                --     { state | innerGame = nextInnerGameState }
             in
-            ( CurrentSession nextState seed, cmd )
-
-        -- ( CurrentSession state seed, InnerToOuter ito ) ->
-        --     let
-        --         nextState =
-        --             case ito of
-        --                 Benzino.ToOthers (Benzino.Payout money) ->
-        --                     { state | account = state.account |> Account.add money }
-        --     in
-        --     ( CurrentSession nextState seed, Cmd.none )
-        ( CurrentSession state seed, PayoutCollected col ) ->
-            let
-                nextState =
-                    { state | account = state.account |> Account.add col }
-            in
-            ( CurrentSession nextState seed, Cmd.none )
+            ( CurrentSession nextState, cmd )
 
         _ ->
             ( NoSession, Cmd.none )
@@ -198,7 +172,7 @@ view model =
         NoSession ->
             Element.layout [] Element.none
 
-        CurrentSession aggregates _ ->
+        CurrentSession state ->
             Element.layout [] <|
                 Element.column
                     [ Element.width Element.fill
@@ -207,5 +181,5 @@ view model =
                     , Element.spaceEvenly
                     , Element.spacing 48
                     ]
-                    [ displayBenzinoScene aggregates
+                    [ displayBenzinoScene state
                     ]

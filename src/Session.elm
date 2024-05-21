@@ -11,7 +11,6 @@ type Session e
         { account : Account
         , innerGame : Benzino.Model
         }
-        Random.Seed
 
 
 type SessionProblem
