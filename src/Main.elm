@@ -41,13 +41,13 @@ type alias Model =
 type Msg
     = SessionInitiated Time.Posix
     | BetSubmitted Money
+    | InnerGameOccasion Benzino.Msg
 
 
 initialSessionWith : Random.Seed -> Session e
 initialSessionWith seed =
     CurrentSession
-        { lastEvent = Nothing
-        , account = Account 10000
+        { account = Account 10000
         , innerGame =
             { seed = seed
             , bet = 0
@@ -75,10 +75,16 @@ update msg session =
             case state.account |> Account.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
-                        evolveState { payout, event } =
+                        ( nextInnerGameState, innerCmd, innerEffects ) =
+                            state.innerGame |> Benzino.update (Benzino.BetPlaced moneyToBet)
+
+                        firstOfTriple ( value, _, _ ) =
+                            value
+
+                        evolveState { payout } =
                             { state
                                 | account = reducedAccount |> Account.add payout
-                                , lastEvent = Just event
+                                , innerGame = state.innerGame |> Benzino.update (Benzino.BetPlaced moneyToBet) |> firstOfTriple
                             }
 
                         ( settledState, nextSeed ) =
@@ -86,13 +92,23 @@ update msg session =
                                 |> Tuple.mapFirst evolveState
                     in
                     ( CurrentSession settledState nextSeed
-                    , Cmd.none
+                    , innerCmd |> Cmd.map InnerGameOccasion
                     )
 
                 Err _ ->
                     ( session
                     , Cmd.none
                     )
+
+        ( CurrentSession state seed, InnerGameOccasion igo ) ->
+            let
+                ( nextInnerGameState, innerCmd, innerEffects ) =
+                    state.innerGame |> Benzino.update igo
+
+                nextState =
+                    { state | innerGame = nextInnerGameState }
+            in
+            ( CurrentSession nextState seed, Cmd.none )
 
         _ ->
             ( NoSession, Cmd.none )
@@ -114,7 +130,7 @@ init _ =
     )
 
 
-displayBenzinoScene { account, lastEvent } =
+displayBenzinoScene { account, innerGame } =
     let
         balanceDisplay =
             case account of
@@ -145,7 +161,7 @@ displayBenzinoScene { account, lastEvent } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (lastEvent |> Benzino.rollResultsDisplay)
+            (Just innerGame.event |> Benzino.rollResultsDisplay)
         , rollTrigger
         ]
 

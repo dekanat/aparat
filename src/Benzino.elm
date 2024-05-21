@@ -6,7 +6,9 @@ import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
 import Element
 import Element.Font
+import Process
 import Random
+import Task
 
 
 type alias RoundDetails =
@@ -33,8 +35,12 @@ playRound bet seed =
 
 type Msg
     = BetPlaced Money
-    | DiceRolled
+    | DiceRolled RoundDetails
     | RoundResolved
+
+
+type Request
+    = RollDice
 
 
 type alias Model =
@@ -44,29 +50,34 @@ type alias Model =
     }
 
 
-type Effect
+type Happenings
     = Payout Money
 
 
-update : Msg -> Model -> ( Model, List Effect )
+update : Msg -> Model -> ( Model, Cmd Msg, List Happenings )
 update msg model =
     case msg of
         BetPlaced bet ->
-            ( { model | bet = bet }, [] )
-
-        DiceRolled ->
             let
                 ( event, seed ) =
                     model.seed |> Random.step Aparat.rollingPairOfDice
+
+                generateOutcome =
+                    Process.sleep 1
+                        |> Task.andThen (always <| Task.succeed (DiceRolled event))
+                        |> Task.perform identity
             in
-            ( { model | event = event, seed = seed }, [] )
+            ( { model | bet = bet, seed = seed }, generateOutcome, [] )
+
+        DiceRolled event ->
+            ( { model | event = event }, Cmd.none, [] )
 
         RoundResolved ->
             let
                 money =
                     Aparat.calculatePayout model.bet model.event
             in
-            ( model, [ Payout money ] )
+            ( model, Cmd.none, [ Payout money ] )
 
 
 view : Model -> Element.Element Msg
