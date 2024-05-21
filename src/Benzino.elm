@@ -1,8 +1,6 @@
 module Benzino exposing (..)
 
 import Account exposing (Account(..))
-import Aparat exposing (DiceRoll)
-import Common.Die exposing (Face(..), glyphFor)
 import Common.Money exposing (Money)
 import Element
 import Element.Font
@@ -46,13 +44,81 @@ type TalkTheTalk
     | ToOthers Happenings
 
 
+type alias DiceRoll =
+    ( Face, Face )
+
+
+rollingPairOfDice : Random.Generator DiceRoll
+rollingPairOfDice =
+    Random.pair rollingDie rollingDie
+
+
+calculatePayout : Money -> DiceRoll -> Money
+calculatePayout betAmount ( rolledA, rolledB ) =
+    if rolledA == rolledB then
+        betAmount * 6
+
+    else
+        0
+
+
+type Face
+    = Yek
+    | Du
+    | Se
+    | Jhar
+    | Panj
+    | Shesh
+
+
+rollingDie : Random.Generator Face
+rollingDie =
+    Random.uniform Yek
+        [ Du
+        , Se
+        , Jhar
+        , Panj
+        , Shesh
+        ]
+
+
+glyphFor : Face -> String
+glyphFor face =
+    case face of
+        Yek ->
+            "⚀"
+
+        Du ->
+            "⚁"
+
+        Se ->
+            "⚂"
+
+        Jhar ->
+            "⚃"
+
+        Panj ->
+            "⚄"
+
+        Shesh ->
+            "⚅"
+
+
+init : Random.Seed -> Model
+init seed =
+    { seed = seed
+    , bet = 0
+    , event = ( Yek, Yek )
+    }
+
+
 update : Msg -> Model -> ( Model, Cmd TalkTheTalk )
 update msg model =
     case msg of
         BetPlaced bet ->
             let
                 ( event, seed ) =
-                    model.seed |> Random.step Aparat.rollingPairOfDice
+                    model.seed |> Random.step rollingPairOfDice
 
                 generateOutcome =
                     Process.sleep 1
@@ -64,7 +130,7 @@ update msg model =
         DiceRolled event ->
             let
                 money =
-                    Aparat.calculatePayout model.bet event
+                    calculatePayout model.bet event
 
                 declarePayout =
                     Process.sleep 1

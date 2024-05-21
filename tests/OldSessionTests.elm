@@ -1,8 +1,7 @@
 module OldSessionTests exposing (..)
 
 import Account exposing (Account(..))
-import Aparat exposing (DiceRoll)
-import Common.Die exposing (Face(..))
+import Benzino exposing (DiceRoll, Face(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import History exposing (History)

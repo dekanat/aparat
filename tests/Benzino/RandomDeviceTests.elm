@@ -1,9 +1,7 @@
 module Benzino.RandomDeviceTests exposing (..)
 
 import Account exposing (Account(..), AccountingProblem(..))
-import Aparat exposing (rollingPairOfDice)
 import Benzino exposing (..)
-import Common.Die exposing (Face(..))
 import Expect exposing (..)
 import Random
 import Result exposing (..)

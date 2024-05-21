@@ -1,9 +1,8 @@
 module Main exposing (..)
 
 import Account exposing (Account(..))
-import Benzino
+import Benzino exposing (Face(..))
 import Browser
-import Common.Die exposing (Face(..))
 import Common.Money exposing (Money)
 import Debug exposing (toString)
 import Element
@@ -48,11 +47,7 @@ initialSessionWith : Random.Seed -> Session e
 initialSessionWith seed =
     CurrentSession
         { account = Account 10000
-        , innerGame =
-            { seed = seed
-            , bet = 0
-            , event = ( Yek, Yek )
-            }
+        , innerGame = Benzino.init seed
         }
 
 
