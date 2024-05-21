@@ -42,8 +42,7 @@ type Msg
     = SessionInitiated Time.Posix
     | BetSubmitted Money
     | PayoutCollected Money
-    | InnerToSelf Benzino.Msg
-    | InnerToOuter Benzino.Happenings
+    | InnerTalk Benzino.TalkTheTalk
 
 
 initialSessionWith : Random.Seed -> Session e
@@ -80,9 +79,10 @@ update msg session =
                         ( nextInnerGameState, innerCmd ) =
                             state.innerGame |> Benzino.update (Benzino.BetPlaced moneyToBet)
 
-                        evolveInnerGame _ =
+                        evolveState _ =
                             { state
-                                | innerGame =
+                                | account = reducedAccount
+                                , innerGame =
                                     state.innerGame
                                         |> Benzino.update (Benzino.BetPlaced moneyToBet)
                                         |> Tuple.first
@@ -90,10 +90,10 @@ update msg session =
 
                         ( settledState, nextSeed ) =
                             Benzino.playRound moneyToBet seed
-                                |> Tuple.mapFirst evolveInnerGame
+                                |> Tuple.mapFirst evolveState
                     in
                     ( CurrentSession settledState nextSeed
-                    , innerCmd |> Cmd.map InnerToSelf
+                    , innerCmd |> Cmd.map InnerTalk
                     )
 
                 Err _ ->
@@ -101,25 +101,34 @@ update msg session =
                     , Cmd.none
                     )
 
-        ( CurrentSession state seed, InnerToSelf igo ) ->
+        ( CurrentSession state seed, InnerTalk innerMsg ) ->
             let
-                ( nextInnerGameState, innerCmd ) =
-                    state.innerGame |> Benzino.update igo
+                ( nextState, cmd ) =
+                    case innerMsg of
+                        Benzino.ToSelf igo ->
+                            state.innerGame
+                                |> Benzino.update igo
+                                |> Tuple.mapFirst (\ig -> { state | innerGame = ig })
+                                |> Tuple.mapSecond (Cmd.map InnerTalk)
 
-                nextState =
-                    { state | innerGame = nextInnerGameState }
+                        Benzino.ToOthers ogo ->
+                            case ogo of
+                                Benzino.Payout x ->
+                                    ( { state | account = state.account |> Account.add x }, Cmd.none )
+
+                -- nextState =
+                --     { state | innerGame = nextInnerGameState }
             in
-            ( CurrentSession nextState seed, Cmd.none )
+            ( CurrentSession nextState seed, cmd )
 
-        ( CurrentSession state seed, InnerToOuter ito ) ->
-            let
-                nextState =
-                    case ito of
-                        Benzino.Payout money ->
-                            { state | account = state.account |> Account.add money }
-            in
-            ( CurrentSession nextState seed, Cmd.none )
-
+        -- ( CurrentSession state seed, InnerToOuter ito ) ->
+        --     let
+        --         nextState =
+        --             case ito of
+        --                 Benzino.ToOthers (Benzino.Payout money) ->
+        --                     { state | account = state.account |> Account.add money }
+        --     in
+        --     ( CurrentSession nextState seed, Cmd.none )
         ( CurrentSession state seed, PayoutCollected col ) ->
             let
                 nextState =
