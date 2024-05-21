@@ -36,7 +36,6 @@ playRound bet seed =
 type Msg
     = BetPlaced Money
     | DiceRolled RoundDetails
-    | RoundResolved
 
 
 type Request
@@ -54,7 +53,12 @@ type Happenings
     = Payout Money
 
 
-update : Msg -> Model -> ( Model, Cmd Msg, List Happenings )
+type TalkTheTalk
+    = ToSelf Msg
+    | ToOthers Happenings
+
+
+update : Msg -> Model -> ( Model, Cmd TalkTheTalk )
 update msg model =
     case msg of
         BetPlaced bet ->
@@ -64,20 +68,22 @@ update msg model =
 
                 generateOutcome =
                     Process.sleep 1
-                        |> Task.andThen (always <| Task.succeed (DiceRolled event))
+                        |> Task.andThen (always <| Task.succeed (ToSelf (DiceRolled event)))
                         |> Task.perform identity
             in
-            ( { model | bet = bet, seed = seed }, generateOutcome, [] )
+            ( { model | bet = bet, seed = seed }, generateOutcome )
 
         DiceRolled event ->
-            ( { model | event = event }, Cmd.none, [] )
-
-        RoundResolved ->
             let
                 money =
-                    Aparat.calculatePayout model.bet model.event
+                    Aparat.calculatePayout model.bet event
+
+                declarePayout =
+                    Process.sleep 1
+                        |> Task.andThen (always <| Task.succeed (ToOthers (Payout money)))
+                        |> Task.perform identity
             in
-            ( model, Cmd.none, [ Payout money ] )
+            ( { model | event = event }, declarePayout )
 
 
 view : Model -> Element.Element Msg

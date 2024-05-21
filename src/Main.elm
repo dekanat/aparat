@@ -41,7 +41,9 @@ type alias Model =
 type Msg
     = SessionInitiated Time.Posix
     | BetSubmitted Money
-    | InnerGameOccasion Benzino.Msg
+    | PayoutCollected Money
+    | InnerToSelf Benzino.Msg
+    | InnerToOuter Benzino.Happenings
 
 
 initialSessionWith : Random.Seed -> Session e
@@ -75,24 +77,23 @@ update msg session =
             case state.account |> Account.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
-                        ( nextInnerGameState, innerCmd, innerEffects ) =
+                        ( nextInnerGameState, innerCmd ) =
                             state.innerGame |> Benzino.update (Benzino.BetPlaced moneyToBet)
 
-                        firstOfTriple ( value, _, _ ) =
-                            value
-
-                        evolveState { payout } =
+                        evolveInnerGame _ =
                             { state
-                                | account = reducedAccount |> Account.add payout
-                                , innerGame = state.innerGame |> Benzino.update (Benzino.BetPlaced moneyToBet) |> firstOfTriple
+                                | innerGame =
+                                    state.innerGame
+                                        |> Benzino.update (Benzino.BetPlaced moneyToBet)
+                                        |> Tuple.first
                             }
 
                         ( settledState, nextSeed ) =
                             Benzino.playRound moneyToBet seed
-                                |> Tuple.mapFirst evolveState
+                                |> Tuple.mapFirst evolveInnerGame
                     in
                     ( CurrentSession settledState nextSeed
-                    , innerCmd |> Cmd.map InnerGameOccasion
+                    , innerCmd |> Cmd.map InnerToSelf
                     )
 
                 Err _ ->
@@ -100,13 +101,29 @@ update msg session =
                     , Cmd.none
                     )
 
-        ( CurrentSession state seed, InnerGameOccasion igo ) ->
+        ( CurrentSession state seed, InnerToSelf igo ) ->
             let
-                ( nextInnerGameState, innerCmd, innerEffects ) =
+                ( nextInnerGameState, innerCmd ) =
                     state.innerGame |> Benzino.update igo
 
                 nextState =
                     { state | innerGame = nextInnerGameState }
+            in
+            ( CurrentSession nextState seed, Cmd.none )
+
+        ( CurrentSession state seed, InnerToOuter ito ) ->
+            let
+                nextState =
+                    case ito of
+                        Benzino.Payout money ->
+                            { state | account = state.account |> Account.add money }
+            in
+            ( CurrentSession nextState seed, Cmd.none )
+
+        ( CurrentSession state seed, PayoutCollected col ) ->
+            let
+                nextState =
+                    { state | account = state.account |> Account.add col }
             in
             ( CurrentSession nextState seed, Cmd.none )
 
