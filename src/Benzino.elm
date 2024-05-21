@@ -74,12 +74,12 @@ update msg model =
             ( { model | event = event }, declarePayout )
 
 
-view : Model -> Element.Element Msg
+view : Model -> Element.Element TalkTheTalk
 view { event } =
     rollResultsDisplay (Just event)
 
 
-rollResultsDisplay : Maybe RoundDetails -> Element.Element msg
+rollResultsDisplay : Maybe RoundDetails -> Element.Element TalkTheTalk
 rollResultsDisplay lastEvent =
     let
         xxlSize =

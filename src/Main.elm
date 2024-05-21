@@ -161,7 +161,7 @@ displayBenzinoScene { account, innerGame } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (Just innerGame.event |> Benzino.rollResultsDisplay)
+            (Just innerGame.event |> Benzino.rollResultsDisplay |> Element.map InnerTalk)
         , rollTrigger
         ]
 
