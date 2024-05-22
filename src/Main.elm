@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Accounting exposing (Account(..))
-import Benzino exposing (Face(..))
+import Aparat.Benzino exposing (Face(..))
 import Browser
 import Common.Money exposing (Money)
 import Debug exposing (toString)
@@ -34,20 +34,20 @@ main =
 
 
 type alias Model =
-    Session Benzino.RoundDetails
+    Session Aparat.Benzino.RoundDetails
 
 
 type Msg
     = SessionInitiated Time.Posix
     | BetSubmitted Money
-    | InnerTalk Benzino.TalkTheTalk
+    | InnerTalk Aparat.Benzino.TalkTheTalk
 
 
 initialSessionWith : Random.Seed -> Session e
 initialSessionWith seed =
     CurrentSession
         { account = Account 10000
-        , innerGame = Benzino.init seed
+        , innerGame = Aparat.Benzino.init seed
         }
 
 
@@ -70,7 +70,7 @@ update msg session =
                 Ok reducedAccount ->
                     let
                         ( nextInnerGameState, innerCmd ) =
-                            state.innerGame |> Benzino.update (Benzino.BetPlaced moneyToBet)
+                            state.innerGame |> Aparat.Benzino.update (Aparat.Benzino.BetPlaced moneyToBet)
 
                         nextState =
                             { state
@@ -92,15 +92,15 @@ update msg session =
             let
                 ( nextState, cmd ) =
                     case innerMsg of
-                        Benzino.ToSelf igo ->
+                        Aparat.Benzino.ToSelf igo ->
                             state.innerGame
-                                |> Benzino.update igo
+                                |> Aparat.Benzino.update igo
                                 |> Tuple.mapFirst (\ig -> { state | innerGame = ig })
                                 |> Tuple.mapSecond (Cmd.map InnerTalk)
 
-                        Benzino.ToOthers ogo ->
+                        Aparat.Benzino.ToOthers ogo ->
                             case ogo of
-                                Benzino.Payout x ->
+                                Aparat.Benzino.Payout x ->
                                     ( { state | account = state.account |> Accounting.add x }, Cmd.none )
             in
             ( CurrentSession nextState, cmd )
@@ -156,7 +156,7 @@ displayBenzinoScene { account, innerGame } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (Just innerGame.event |> Benzino.rollResultsDisplay |> Element.map InnerTalk)
+            (Just innerGame.event |> Aparat.Benzino.rollResultsDisplay |> Element.map InnerTalk)
         , rollTrigger
         ]
 

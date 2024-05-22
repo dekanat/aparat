@@ -1,4 +1,4 @@
-module Benzino exposing (..)
+module Aparat.Benzino exposing (..)
 
 import Accounting exposing (Account(..))
 import Common.Money exposing (Money)
