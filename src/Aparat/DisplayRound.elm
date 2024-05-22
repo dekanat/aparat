@@ -1,6 +1,7 @@
 module Aparat.DisplayRound exposing (..)
 
-import Aparat.Model exposing (DieFace(..), NextModel)
+import Aparat.Core exposing (DieFace(..))
+import Aparat.Model exposing (NextModel)
 import Element
 import Element.Font
 

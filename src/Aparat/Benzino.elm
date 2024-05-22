@@ -1,8 +1,9 @@
 module Aparat.Benzino exposing (..)
 
 import Accounting exposing (Account(..))
+import Aparat.Core exposing (DieFace(..), PossibleCombination)
 import Aparat.DisplayRound
-import Aparat.Model exposing (DieFace(..), Model, PossibleCombination)
+import Aparat.Model exposing (Model)
 import Aparat.PairOfDice exposing (fairPairOfDice)
 import Common.Money exposing (Money)
 import Element
