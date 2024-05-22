@@ -1,16 +1,13 @@
 module Aparat.Benzino exposing (..)
 
 import Accounting exposing (Account(..))
+import Aparat.PairOfDice as RandomDevice exposing (DieFace(..), PossibleCombination, fairPairOfDice)
 import Common.Money exposing (Money)
 import Element
 import Element.Font
 import Process
 import Random
 import Task
-
-
-type alias RoundDetails =
-    DiceRoll
 
 
 type alias RoundOutcome e =
@@ -21,7 +18,7 @@ type alias RoundOutcome e =
 
 type Msg
     = BetPlaced Money
-    | DiceRolled RoundDetails
+    | DiceRolled PossibleCombination
 
 
 type Request
@@ -30,7 +27,7 @@ type Request
 
 type alias Model =
     { seed : Random.Seed
-    , event : DiceRoll
+    , event : PossibleCombination
     , bet : Money
     }
 
@@ -44,16 +41,7 @@ type TalkTheTalk
     | ToOthers Happenings
 
 
-type alias DiceRoll =
-    ( Face, Face )
-
-
-rollingPairOfDice : Random.Generator DiceRoll
-rollingPairOfDice =
-    Random.pair rollingDie rollingDie
-
-
-calculatePayout : Money -> DiceRoll -> Money
+calculatePayout : Money -> PossibleCombination -> Money
 calculatePayout betAmount ( rolledA, rolledB ) =
     if rolledA == rolledB then
         betAmount * 6
@@ -62,27 +50,7 @@ calculatePayout betAmount ( rolledA, rolledB ) =
         0
 
 
-type Face
-    = Yek
-    | Du
-    | Se
-    | Jhar
-    | Panj
-    | Shesh
-
-
-rollingDie : Random.Generator Face
-rollingDie =
-    Random.uniform Yek
-        [ Du
-        , Se
-        , Jhar
-        , Panj
-        , Shesh
-        ]
-
-
-glyphFor : Face -> String
+glyphFor : DieFace -> String
 glyphFor face =
     case face of
         Yek ->
@@ -118,7 +86,7 @@ update msg model =
         BetPlaced bet ->
             let
                 ( event, seed ) =
-                    model.seed |> Random.step rollingPairOfDice
+                    model.seed |> Random.step fairPairOfDice
 
                 generateOutcome =
                     Process.sleep 1
@@ -145,13 +113,13 @@ view { event } =
     rollResultsDisplay (Just event)
 
 
-rollResultsDisplay : Maybe RoundDetails -> Element.Element TalkTheTalk
+rollResultsDisplay : Maybe PossibleCombination -> Element.Element TalkTheTalk
 rollResultsDisplay lastEvent =
     let
         xxlSize =
             200
 
-        pictogramFor : ( Face, Face ) -> Element.Element msg
+        pictogramFor : ( DieFace, DieFace ) -> Element.Element msg
         pictogramFor ( rolledA, rolledB ) =
             Element.row
                 [ Element.Font.size xxlSize

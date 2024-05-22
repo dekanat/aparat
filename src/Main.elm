@@ -1,7 +1,8 @@
 module Main exposing (..)
 
 import Accounting exposing (Account(..))
-import Aparat.Benzino exposing (Face(..))
+import Aparat.Benzino
+import Aparat.PairOfDice exposing (PossibleCombination)
 import Browser
 import Common.Money exposing (Money)
 import Debug exposing (toString)
@@ -34,7 +35,7 @@ main =
 
 
 type alias Model =
-    Session Aparat.Benzino.RoundDetails
+    Session PossibleCombination
 
 
 type Msg
