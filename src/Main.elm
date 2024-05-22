@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Accounting exposing (Account(..))
 import Aparat.Benzino
-import Aparat.Model exposing (PossibleCombination)
+import Aparat.Model
 import Browser
 import Common.Money exposing (Money)
 import Debug exposing (toString)
@@ -11,7 +11,6 @@ import Element.Border
 import Element.Input
 import Html exposing (Html)
 import Random
-import Session exposing (Session(..), SessionProblem(..))
 import Task exposing (..)
 import Time exposing (..)
 
@@ -35,7 +34,15 @@ main =
 
 
 type alias Model =
-    Session PossibleCombination
+    Session
+
+
+type Session
+    = NoSession
+    | CurrentSession
+        { account : Account
+        , innerGame : Aparat.Model.Model
+        }
 
 
 type Msg
@@ -44,7 +51,7 @@ type Msg
     | InnerTalk Aparat.Benzino.TalkTheTalk
 
 
-initialSessionWith : Random.Seed -> Session e
+initialSessionWith : Random.Seed -> Session
 initialSessionWith seed =
     CurrentSession
         { account = Account 10000
