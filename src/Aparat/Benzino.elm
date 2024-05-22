@@ -1,11 +1,10 @@
 module Aparat.Benzino exposing (..)
 
 import Accounting exposing (Account(..))
-import Aparat.DisplayRound exposing (rollResultsDisplay)
-import Aparat.PairOfDice as RandomDevice exposing (DieFace(..), PossibleCombination, fairPairOfDice)
+import Aparat.DisplayRound
+import Aparat.PairOfDice exposing (DieFace(..), PossibleCombination, fairPairOfDice)
 import Common.Money exposing (Money)
 import Element
-import Element.Font
 import Process
 import Random
 import Task
@@ -111,4 +110,4 @@ update msg model =
 
 view : Model -> Element.Element TalkTheTalk
 view { event } =
-    rollResultsDisplay (Just event)
+    Aparat.DisplayRound.view (Just event)
