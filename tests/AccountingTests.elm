@@ -14,7 +14,7 @@ accountingTests =
                     Accounting.update (WithdrawalRequest 2000) (Account 3000)
                         |> Expect.all
                             [ Expect.equal (Account 1000) << Tuple.first
-                            , Expect.equal (WithdrawalSuccess 2000)
+                            , Expect.equal (ToOthers (WithdrawalSuccess 2000))
                                 << Tuple.second
                             ]
             , test "when the balance does not allow it" <|
@@ -22,7 +22,7 @@ accountingTests =
                     Accounting.update (WithdrawalRequest 2000) (Account 1000)
                         |> Expect.all
                             [ Expect.equal (Account 1000) << Tuple.first
-                            , Expect.equal WithdrawalFailure
+                            , Expect.equal (ToOthers WithdrawalFailure)
                                 << Tuple.second
                             ]
             ]

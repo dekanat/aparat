@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Accounting exposing (Account(..), AccountingResult(..))
+import Accounting exposing (Account(..))
 import Benzino exposing (Face(..))
 import Browser
 import Common.Money exposing (Money)
@@ -66,28 +66,27 @@ update msg session =
             )
 
         ( CurrentSession state, BetSubmitted moneyToBet ) ->
-            let
-                ( account, exchange ) =
-                    state.account
-                        |> Accounting.update (Accounting.WithdrawalRequest moneyToBet)
-            in
-            case exchange of
-                WithdrawalSuccess betAmount ->
+            case state.account |> Accounting.deduct moneyToBet of
+                Ok reducedAccount ->
                     let
                         ( nextInnerGameState, innerCmd ) =
-                            state.innerGame
-                                |> Benzino.update (Benzino.BetPlaced betAmount)
+                            state.innerGame |> Benzino.update (Benzino.BetPlaced moneyToBet)
 
                         nextState =
                             { state
-                                | account = account
-                                , innerGame = nextInnerGameState
+                                | account = reducedAccount
+                                , innerGame =
+                                    nextInnerGameState
                             }
                     in
-                    ( CurrentSession nextState, innerCmd |> Cmd.map InnerTalk )
+                    ( CurrentSession nextState
+                    , innerCmd |> Cmd.map InnerTalk
+                    )
 
-                WithdrawalFailure ->
-                    ( CurrentSession { state | account = account }, Cmd.none )
+                Err _ ->
+                    ( session
+                    , Cmd.none
+                    )
 
         ( CurrentSession state, InnerTalk innerMsg ) ->
             let
