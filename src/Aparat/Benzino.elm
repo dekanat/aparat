@@ -82,4 +82,4 @@ update msg model =
 
 view : Model -> Element.Element TalkTheTalk
 view { event } =
-    Aparat.DisplayRound.view (Just event)
+    Aparat.DisplayRound.view { presentCombination = Just event }

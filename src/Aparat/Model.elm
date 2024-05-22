@@ -22,3 +22,8 @@ type alias Model =
     , event : PossibleCombination
     , bet : Money
     }
+
+
+type alias NextModel =
+    { presentCombination : Maybe PossibleCombination
+    }

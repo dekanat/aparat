@@ -1,6 +1,6 @@
 module Aparat.DisplayRound exposing (..)
 
-import Aparat.Model exposing (DieFace(..), PossibleCombination)
+import Aparat.Model exposing (DieFace(..), NextModel)
 import Element
 import Element.Font
 
@@ -27,8 +27,8 @@ symbolFor face =
             "⚅"
 
 
-view : Maybe PossibleCombination -> Element.Element msg
-view lastEvent =
+view : NextModel -> Element.Element msg
+view { presentCombination } =
     let
         xxlSize =
             200
@@ -46,7 +46,7 @@ view lastEvent =
                 , Element.text (symbolFor rolledB)
                 ]
     in
-    case lastEvent of
+    case presentCombination of
         Nothing ->
             pictogramFor defaultCombination
 
