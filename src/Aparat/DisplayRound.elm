@@ -1,6 +1,6 @@
 module Aparat.DisplayRound exposing (..)
 
-import Aparat.PairOfDice exposing (DieFace(..), PossibleCombination)
+import Aparat.Model exposing (DieFace(..), PossibleCombination)
 import Element
 import Element.Font
 

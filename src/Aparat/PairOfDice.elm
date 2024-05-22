@@ -1,19 +1,7 @@
 module Aparat.PairOfDice exposing (..)
 
+import Aparat.Model exposing (DieFace(..), PossibleCombination)
 import Random
-
-
-type alias PossibleCombination =
-    ( DieFace, DieFace )
-
-
-type DieFace
-    = Yek
-    | Du
-    | Se
-    | Jhar
-    | Panj
-    | Shesh
 
 
 fairPairOfDice : Random.Generator PossibleCombination

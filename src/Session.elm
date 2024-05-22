@@ -1,14 +1,14 @@
 module Session exposing (..)
 
 import Accounting exposing (Account)
-import Aparat.Benzino
+import Aparat.Model
 
 
 type Session e
     = NoSession
     | CurrentSession
         { account : Account
-        , innerGame : Aparat.Benzino.Model
+        , innerGame : Aparat.Model.Model
         }
 
 

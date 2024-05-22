@@ -2,7 +2,8 @@ module Aparat.Benzino exposing (..)
 
 import Accounting exposing (Account(..))
 import Aparat.DisplayRound
-import Aparat.PairOfDice exposing (DieFace(..), PossibleCombination, fairPairOfDice)
+import Aparat.Model exposing (DieFace(..), Model, PossibleCombination)
+import Aparat.PairOfDice exposing (fairPairOfDice)
 import Common.Money exposing (Money)
 import Element
 import Process
@@ -25,13 +26,6 @@ type Request
     = RollDice
 
 
-type alias Model =
-    { seed : Random.Seed
-    , event : PossibleCombination
-    , bet : Money
-    }
-
-
 type Happenings
     = Payout Money
 
@@ -48,28 +42,6 @@ calculatePayout betAmount ( rolledA, rolledB ) =
 
     else
         0
-
-
-glyphFor : DieFace -> String
-glyphFor face =
-    case face of
-        Yek ->
-            "⚀"
-
-        Du ->
-            "⚁"
-
-        Se ->
-            "⚂"
-
-        Jhar ->
-            "⚃"
-
-        Panj ->
-            "⚄"
-
-        Shesh ->
-            "⚅"
 
 
 init : Random.Seed -> Model

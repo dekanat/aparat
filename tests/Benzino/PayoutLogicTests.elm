@@ -1,7 +1,7 @@
 module Benzino.PayoutLogicTests exposing (..)
 
 import Aparat.Benzino
-import Aparat.PairOfDice exposing (DieFace(..))
+import Aparat.Model exposing (DieFace(..))
 import Expect exposing (..)
 import Fuzz exposing (..)
 import Test exposing (..)

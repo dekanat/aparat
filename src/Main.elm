@@ -3,7 +3,7 @@ module Main exposing (..)
 import Accounting exposing (Account(..))
 import Aparat.Benzino
 import Aparat.DisplayRound
-import Aparat.PairOfDice exposing (PossibleCombination)
+import Aparat.Model exposing (PossibleCombination)
 import Browser
 import Common.Money exposing (Money)
 import Debug exposing (toString)
