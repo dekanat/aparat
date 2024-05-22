@@ -69,40 +69,25 @@ update msg session =
             let
                 ( account, exchange ) =
                     state.account
-                        |> Accounting.update (Accounting.WithdrawalRequest 2000)
-
-                x =
-                    case exchange of
-                        Accounting.ToOthers (WithdrawalSuccess m) ->
-                            1
-
-                        Accounting.ToOthers WithdrawalFailure ->
-                            3
-
-                        Accounting.Request _ ->
-                            2
+                        |> Accounting.update (Accounting.WithdrawalRequest moneyToBet)
             in
-            case state.account |> Accounting.deduct moneyToBet of
-                Ok reducedAccount ->
+            case exchange of
+                WithdrawalSuccess betAmount ->
                     let
                         ( nextInnerGameState, innerCmd ) =
-                            state.innerGame |> Benzino.update (Benzino.BetPlaced moneyToBet)
+                            state.innerGame
+                                |> Benzino.update (Benzino.BetPlaced betAmount)
 
                         nextState =
                             { state
-                                | account = reducedAccount
-                                , innerGame =
-                                    nextInnerGameState
+                                | account = account
+                                , innerGame = nextInnerGameState
                             }
                     in
-                    ( CurrentSession nextState
-                    , innerCmd |> Cmd.map InnerTalk
-                    )
+                    ( CurrentSession nextState, innerCmd |> Cmd.map InnerTalk )
 
-                Err _ ->
-                    ( session
-                    , Cmd.none
-                    )
+                WithdrawalFailure ->
+                    ( CurrentSession { state | account = account }, Cmd.none )
 
         ( CurrentSession state, InnerTalk innerMsg ) ->
             let

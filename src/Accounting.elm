@@ -33,18 +33,18 @@ type AccountingProblem
     = InsufficientBalance
 
 
-update : AccountingOps -> Account -> ( Account, Exchange )
+update : AccountingOps -> Account -> ( Account, AccountingResult )
 update msg account =
     case msg of
         WithdrawalRequest amount ->
             case deduct amount account of
                 Ok newAccount ->
                     ( newAccount
-                    , ToOthers (WithdrawalSuccess 2000)
+                    , WithdrawalSuccess 2000
                     )
 
                 Err _ ->
-                    ( account, ToOthers WithdrawalFailure )
+                    ( account, WithdrawalFailure )
 
 
 deduct : Money -> Account -> Result AccountingProblem Account
