@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Accounting exposing (Account(..))
 import Aparat.Benzino
+import Aparat.DisplayRound
 import Aparat.PairOfDice exposing (PossibleCombination)
 import Browser
 import Common.Money exposing (Money)
@@ -157,7 +158,7 @@ displayBenzinoScene { account, innerGame } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (Just innerGame.event |> Aparat.Benzino.rollResultsDisplay |> Element.map InnerTalk)
+            (Just innerGame.event |> Aparat.DisplayRound.rollResultsDisplay |> Element.map InnerTalk)
         , rollTrigger
         ]
 

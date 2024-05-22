@@ -1,6 +1,7 @@
 module Aparat.Benzino exposing (..)
 
 import Accounting exposing (Account(..))
+import Aparat.DisplayRound exposing (rollResultsDisplay)
 import Aparat.PairOfDice as RandomDevice exposing (DieFace(..), PossibleCombination, fairPairOfDice)
 import Common.Money exposing (Money)
 import Element
@@ -111,27 +112,3 @@ update msg model =
 view : Model -> Element.Element TalkTheTalk
 view { event } =
     rollResultsDisplay (Just event)
-
-
-rollResultsDisplay : Maybe PossibleCombination -> Element.Element TalkTheTalk
-rollResultsDisplay lastEvent =
-    let
-        xxlSize =
-            200
-
-        pictogramFor : ( DieFace, DieFace ) -> Element.Element msg
-        pictogramFor ( rolledA, rolledB ) =
-            Element.row
-                [ Element.Font.size xxlSize
-                , Element.spacing 8
-                ]
-                [ Element.text (glyphFor rolledA)
-                , Element.text (glyphFor rolledB)
-                ]
-    in
-    case lastEvent of
-        Nothing ->
-            pictogramFor ( Shesh, Yek )
-
-        Just details ->
-            pictogramFor details
