@@ -36,7 +36,7 @@ updateTests =
     in
     test "round resolves as expected" <|
         \() ->
-            update (RoundInitiated 100) initialState
+            update (InitiateRound 100) initialState
                 |> Expect.all
                     [ Tuple.first >> .lastEvent >> ensureSomeValue
                     ]

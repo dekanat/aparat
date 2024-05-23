@@ -7,7 +7,7 @@ import Random
 
 
 type Request
-    = RoundInitiated Money
+    = InitiateRound Money
 
 
 type alias Model =
@@ -29,7 +29,7 @@ type alias Callback msg =
 updateWith : Callback msg -> Request -> Model -> ( Model, msg )
 updateWith { claimPayout } msg model =
     case msg of
-        RoundInitiated bet ->
+        InitiateRound bet ->
             let
                 ( settledCombination, nextSeed ) =
                     Random.step fairPairOfDice model.seed
