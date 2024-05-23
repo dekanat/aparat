@@ -1,7 +1,8 @@
-module Benzino.AparatTests exposing (..)
+module Aparat.AparatTests exposing (..)
 
 import Aparat.Aparat as Aparat exposing (Request(..))
-import Aparat.Core exposing (DieFace(..), winMultiplierFor)
+import Aparat.Die exposing (Face(..))
+import Aparat.PayoutLogic exposing (winMultiplierFor)
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import Fuzz exposing (..)
@@ -23,7 +24,8 @@ updateTests =
             }
 
         update =
-            Aparat.updateWith { claimPayout = PayoutReceived }
+            Aparat.updateWith
+                { claimPayout = always Expect.pass }
 
         ensureSomeValue : Maybe a -> Expectation
         ensureSomeValue m =
@@ -36,9 +38,11 @@ updateTests =
     in
     test "round resolves as expected" <|
         \() ->
-            update (InitiateRound 100) initialState
+            initialState
+                |> update (InitiateRound 100)
                 |> Expect.all
                     [ Tuple.first >> .lastEvent >> ensureSomeValue
+                    , Tuple.second >> Maybe.withDefault (Expect.fail "Should yield")
                     ]
 
 
@@ -46,11 +50,11 @@ aparatTests : Test
 aparatTests =
     describe "Aparat"
         [ describe "Determine Payout"
-            [ test "that apprat notifies of wins" <|
+            [ test "winning combination" <|
                 \() ->
                     winMultiplierFor ( Panj, Panj )
                         |> Expect.equal 6
-            , test "that apprat notifies of lose" <|
+            , test "not winning combination" <|
                 \() ->
                     winMultiplierFor ( Panj, Yek )
                         |> Expect.equal 0

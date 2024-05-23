@@ -1,11 +1,12 @@
 module Aparat.View exposing (..)
 
-import Aparat.Core exposing (DieFace(..), PossibleCombination)
+import Aparat.ChanceMechanism exposing (PossibleCombination)
+import Aparat.Die as Die exposing (Face(..))
 import Element
 import Element.Font
 
 
-symbolFor : DieFace -> String
+symbolFor : Die.Face -> String
 symbolFor face =
     case face of
         Yek ->

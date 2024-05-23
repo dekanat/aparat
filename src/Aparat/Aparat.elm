@@ -1,8 +1,8 @@
 module Aparat.Aparat exposing (..)
 
 import Aggregate
-import Aparat.Core exposing (PossibleCombination, winMultiplierFor)
-import Aparat.Device exposing (fairPairOfDice)
+import Aparat.ChanceMechanism exposing (PossibleCombination, fairPairOfDice)
+import Aparat.PayoutLogic exposing (winMultiplierFor)
 import Common.Money exposing (Money)
 import Random
 
