@@ -1,9 +1,5 @@
 module Aparat.Core exposing (..)
 
-import Common.Money exposing (Money)
-import Random
-import Task
-
 
 type alias PossibleCombination =
     ( DieFace, DieFace )
@@ -18,21 +14,14 @@ type DieFace
     | Shesh
 
 
-type alias Model =
-    { seed : Random.Seed
-    , lastEvent : Maybe PossibleCombination
-    }
+type alias Multiplier =
+    Int
 
 
-type alias RoundOutcome =
-    { bet : Money
-    , payout : Money
-    }
+winMultiplierFor : PossibleCombination -> Multiplier
+winMultiplierFor ( a, b ) =
+    if a == b then
+        6
 
-
-type alias Args msg =
-    { resolve : RoundOutcome -> Cmd msg }
-
-
-type Msg
-    = BetPlaced Money
+    else
+        0
