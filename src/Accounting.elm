@@ -8,16 +8,6 @@ type Request
     = Withdraw Money
 
 
-type AccountingResult
-    = WithdrawalSuccess Money
-    | WithdrawalFailure
-
-
-type Exchange
-    = Request Request
-    | ToOthers AccountingResult
-
-
 type Account
     = Account Money
 
@@ -57,20 +47,6 @@ updateWith { fulfillOrder, rejectOrder } request model =
 
                 Err _ ->
                     ( model, rejectOrder )
-
-
-update : Request -> Model -> ( Model, Exchange )
-update msg account =
-    case msg of
-        Withdraw amount ->
-            case deduct amount account of
-                Ok newAccount ->
-                    ( newAccount
-                    , ToOthers (WithdrawalSuccess 2000)
-                    )
-
-                Err _ ->
-                    ( account, ToOthers WithdrawalFailure )
 
 
 deduct : Money -> Account -> Result AccountingProblem Account
