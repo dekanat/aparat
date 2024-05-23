@@ -5,7 +5,7 @@ import Time exposing (Weekday(..))
 
 
 type Request
-    = WithdrawalRequest Money
+    = Withdraw Money
 
 
 type AccountingResult
@@ -37,10 +37,32 @@ type alias Model =
     Account
 
 
+type alias Callback msg =
+    { fulfillOrder : Money -> msg
+    , rejectOrder : msg
+    }
+
+
+updateWith : Callback msg -> Request -> Model -> ( Model, msg )
+updateWith { fulfillOrder, rejectOrder } request model =
+    case request of
+        Withdraw money ->
+            let
+                deduction =
+                    deduct money model
+            in
+            case deduction of
+                Ok account ->
+                    ( account, fulfillOrder money )
+
+                Err _ ->
+                    ( model, rejectOrder )
+
+
 update : Request -> Model -> ( Model, Exchange )
 update msg account =
     case msg of
-        WithdrawalRequest amount ->
+        Withdraw amount ->
             case deduct amount account of
                 Ok newAccount ->
                     ( newAccount

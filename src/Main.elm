@@ -47,7 +47,9 @@ type Session
 
 type Msg
     = SessionInitiated Time.Posix
-    | BetSubmitted Money
+    | Noop
+    | BetOrdered Money
+    | BetPlaced Money
     | PayoutReceived Money
 
 
@@ -78,25 +80,37 @@ update msg session =
             , Cmd.none
             )
 
-        ( CurrentSession { account, innerGame }, BetSubmitted moneyToBet ) ->
-            case account |> Accounting.deduct moneyToBet of
-                Ok reducedAccount ->
-                    let
-                        ( resolvedRound, callback ) =
-                            innerGame
-                                |> Aparat.updateWith { claimPayout = PayoutReceived } (Aparat.RoundInitiated moneyToBet)
-                    in
-                    ( CurrentSession
-                        { account = reducedAccount
-                        , innerGame = resolvedRound
-                        }
-                    , run callback
-                    )
+        ( CurrentSession state, BetOrdered moneyToBet ) ->
+            let
+                request =
+                    Accounting.Withdraw moneyToBet
 
-                Err _ ->
-                    ( session
-                    , Cmd.none
-                    )
+                orderBet =
+                    Accounting.updateWith
+                        { fulfillOrder = BetPlaced
+                        , rejectOrder = Noop
+                        }
+
+                ( modifiedAccount, callback ) =
+                    state.account
+                        |> orderBet request
+            in
+            ( CurrentSession { state | account = modifiedAccount }
+            , run callback
+            )
+
+        ( CurrentSession state, BetPlaced amount ) ->
+            let
+                ( resolvedRound, callback ) =
+                    state.innerGame
+                        |> Aparat.updateWith { claimPayout = PayoutReceived } (Aparat.RoundInitiated amount)
+            in
+            ( CurrentSession
+                { state
+                    | innerGame = resolvedRound
+                }
+            , run callback
+            )
 
         ( CurrentSession state, PayoutReceived amount ) ->
             let
@@ -141,7 +155,7 @@ displayBenzinoScene { account, innerGame } =
                 , Element.padding 8
                 ]
                 { label = Element.text "Roll for 1000"
-                , onPress = Just (BetSubmitted 1000)
+                , onPress = Just (BetOrdered 1000)
                 }
     in
     Element.column

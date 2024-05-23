@@ -11,7 +11,7 @@ accountingTests =
         [ describe "Recieving a withdrawal request"
             [ test "when the balance allows it" <|
                 \() ->
-                    Accounting.update (WithdrawalRequest 2000) (Account 3000)
+                    Accounting.update (Withdraw 2000) (Account 3000)
                         |> Expect.all
                             [ Expect.equal (Account 1000) << Tuple.first
                             , Expect.equal (ToOthers (WithdrawalSuccess 2000))
@@ -19,7 +19,7 @@ accountingTests =
                             ]
             , test "when the balance does not allow it" <|
                 \() ->
-                    Accounting.update (WithdrawalRequest 2000) (Account 1000)
+                    Accounting.update (Withdraw 2000) (Account 1000)
                         |> Expect.all
                             [ Expect.equal (Account 1000) << Tuple.first
                             , Expect.equal (ToOthers WithdrawalFailure)
