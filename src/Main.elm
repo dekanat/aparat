@@ -82,12 +82,9 @@ update msg session =
             case account |> Accounting.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
-                        evaluateRound =
-                            Aparat.updateWith { claimPayout = PayoutReceived }
-
                         ( resolvedRound, callback ) =
                             innerGame
-                                |> evaluateRound (Aparat.RoundInitiated moneyToBet)
+                                |> Aparat.updateWith { claimPayout = PayoutReceived } (Aparat.RoundInitiated moneyToBet)
                     in
                     ( CurrentSession
                         { account = reducedAccount

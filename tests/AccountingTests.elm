@@ -1,6 +1,6 @@
 module AccountingTests exposing (..)
 
-import Accounting exposing (Account(..), AccountingOps(..), AccountingResult(..), Exchange(..))
+import Accounting exposing (Account(..), AccountingResult(..), Exchange(..), Request(..))
 import Expect exposing (..)
 import Test exposing (..)
 

@@ -1,7 +1,7 @@
 module Benzino.AparatTests exposing (..)
 
 import Aparat.Core exposing (DieFace(..), winMultiplierFor)
-import Aparat.Model exposing (Msg(..))
+import Aparat.Model exposing (Request(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import Fuzz exposing (..)

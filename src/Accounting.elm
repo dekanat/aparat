@@ -4,7 +4,7 @@ import Common.Money exposing (Money)
 import Time exposing (Weekday(..))
 
 
-type AccountingOps
+type Request
     = WithdrawalRequest Money
 
 
@@ -14,7 +14,7 @@ type AccountingResult
 
 
 type Exchange
-    = Request AccountingOps
+    = Request Request
     | ToOthers AccountingResult
 
 
@@ -33,7 +33,11 @@ type AccountingProblem
     = InsufficientBalance
 
 
-update : AccountingOps -> Account -> ( Account, Exchange )
+type alias Model =
+    Account
+
+
+update : Request -> Model -> ( Model, Exchange )
 update msg account =
     case msg of
         WithdrawalRequest amount ->

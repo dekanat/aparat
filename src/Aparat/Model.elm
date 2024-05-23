@@ -6,7 +6,7 @@ import Common.Money exposing (Money)
 import Random
 
 
-type Msg
+type Request
     = RoundInitiated Money
 
 
@@ -16,17 +16,17 @@ type alias Model =
     }
 
 
-type alias Callback msg =
-    { claimPayout : Money -> msg
-    }
-
-
 init : Random.Seed -> Model
 init seed =
     Model seed Nothing
 
 
-updateWith : Callback msg -> Msg -> Model -> ( Model, msg )
+type alias Callback msg =
+    { claimPayout : Money -> msg
+    }
+
+
+updateWith : Callback msg -> Request -> Model -> ( Model, msg )
 updateWith { claimPayout } msg model =
     case msg of
         RoundInitiated bet ->
@@ -34,9 +34,9 @@ updateWith { claimPayout } msg model =
                 ( settledCombination, nextSeed ) =
                     Random.step fairPairOfDice model.seed
 
-                callback =
-                    claimPayout (bet * winMultiplierFor settledCombination)
+                payout =
+                    bet * winMultiplierFor settledCombination
             in
             ( Model nextSeed (Just settledCombination)
-            , callback
+            , claimPayout payout
             )
