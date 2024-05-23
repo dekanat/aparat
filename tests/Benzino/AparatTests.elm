@@ -16,7 +16,7 @@ type OuterTypes
 updateTests : Test
 updateTests =
     let
-        initialState : Aparat.Model
+        initialState : Aparat.State
         initialState =
             { seed = Random.initialSeed 0
             , lastEvent = Nothing

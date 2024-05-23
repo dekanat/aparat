@@ -12,6 +12,7 @@ import ControlPanel.View
 import Element
 import Element.Border
 import Html exposing (Html)
+import List.Extra exposing (cycle)
 import Random
 import Task exposing (..)
 import Time exposing (..)
@@ -46,7 +47,7 @@ type Session
 
 type alias SessionState =
     { account : Account
-    , innerGame : Aparat.Model
+    , innerGame : Aparat.State
     }
 
 
@@ -68,62 +69,67 @@ run m =
             Cmd.none
 
 
-accountingLens : Aggregate.Lens SessionState Accounting.Model
-accountingLens =
-    Aggregate.Lens
-        .account
-        (\new state -> { state | account = new })
+lensForAccounting : Aggregate.Lens SessionState Accounting.Model
+lensForAccounting =
+    { get = .account
+    , set = \new state -> { state | account = new }
+    }
 
 
-withdrawBetFromAccount : Money -> SessionState -> ( SessionState, Maybe Msg )
 withdrawBetFromAccount bet =
-    let
-        updateWithProperCallback =
-            Accounting.updateWith
-                { fulfillOrder = BetPlaced
-                , rejectOrder = Noop
-                }
-    in
-    Accounting.Withdraw bet
-        |> Aggregate.performCycle accountingLens updateWithProperCallback
+    Accounting.updateWith
+        { fulfillOrder = BetPlaced
+        , rejectOrder = Noop
+        }
+        (Accounting.Withdraw bet)
 
 
-aparatLens : Aggregate.Lens SessionState Aparat.Model
-aparatLens =
+replenishAccount : Money -> Aggregate.UpdateInner Accounting.Model Msg
+replenishAccount payout =
+    Accounting.updateWith
+        { fulfillOrder = \_ -> Noop
+        , rejectOrder = Noop
+        }
+        (Accounting.Replenish payout)
+
+
+lensForAparat : Aggregate.Lens SessionState Aparat.State
+lensForAparat =
     { get = .innerGame
     , set = \new state -> { state | innerGame = new }
     }
 
 
-initiateRoundOnAparat : Money -> SessionState -> ( SessionState, Maybe Msg )
 initiateRoundOnAparat bet =
-    let
-        updateWithProperCallback =
-            Aparat.updateWith
-                { claimPayout = PayoutReceived }
-    in
-    Aparat.InitiateRound bet
-        |> Aggregate.performCycle aparatLens updateWithProperCallback
+    Aparat.updateWith
+        { claimPayout = PayoutReceived }
+        (Aparat.InitiateRound bet)
 
 
 evolve : Msg -> SessionState -> ( SessionState, Maybe Msg )
 evolve msg state =
+    let
+        cycleOverAccounting =
+            Aggregate.performCycleOver
+                { get = .account
+                , set = \new givenState -> { givenState | account = new }
+                }
+
+        cycleOverAparat =
+            Aggregate.performCycleOver
+                { get = .innerGame
+                , set = \new givenState -> { givenState | innerGame = new }
+                }
+    in
     case msg of
-        BetOrdered amount ->
-            state
-                |> withdrawBetFromAccount amount
+        BetOrdered amountToBet ->
+            cycleOverAccounting (withdrawBetFromAccount amountToBet) state
 
-        BetPlaced amount ->
-            state
-                |> initiateRoundOnAparat amount
+        BetPlaced bet ->
+            cycleOverAparat (initiateRoundOnAparat bet) state
 
-        PayoutReceived amount ->
-            let
-                replenishedAccount =
-                    state.account
-                        |> Accounting.add amount
-            in
-            ( { state | account = replenishedAccount }, Nothing )
+        PayoutReceived totalPayout ->
+            cycleOverAccounting (replenishAccount totalPayout) state
 
         _ ->
             ( state, Nothing )

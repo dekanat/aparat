@@ -7,12 +7,16 @@ type alias Lens state sub =
     }
 
 
-type alias Update sub req msg =
-    req -> sub -> ( sub, Maybe msg )
+type alias Update state request msg =
+    request -> state -> ( state, Maybe msg )
 
 
-performCycle : Lens state sub -> Update sub req msg -> req -> state -> ( state, Maybe msg )
-performCycle lens update req state =
+type alias UpdateInner state msg =
+    state -> ( state, Maybe msg )
+
+
+performCycleOver : Lens state sub -> UpdateInner sub msg -> state -> ( state, Maybe msg )
+performCycleOver lens updateInner state =
     let
         getBoudedState =
             lens.get
@@ -22,5 +26,5 @@ performCycle lens update req state =
     in
     state
         |> getBoudedState
-        |> update req
+        |> updateInner
         |> setBoundedState
