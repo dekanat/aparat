@@ -1,6 +1,6 @@
 module Benzino.RandomDeviceTests exposing (..)
 
-import Accounting.Accounting exposing (Account(..), AccountingProblem(..))
+import Accounting.Account exposing (Account(..), AccountingProblem(..))
 import Aparat.Device exposing (fairPairOfDice)
 import Expect exposing (..)
 import Random

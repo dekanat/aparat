@@ -1,6 +1,6 @@
 module AccountingTests exposing (..)
 
-import Accounting.Accounting exposing (Account(..), Request(..))
+import Accounting.Account as Account exposing (Account(..))
 import Expect exposing (..)
 import Test exposing (..)
 
@@ -23,7 +23,7 @@ playerAccountTests =
                 [ test "should increase balance correctly" <|
                     \() ->
                         Account 1000
-                            |> Accounting.Accounting.add 1000
+                            |> Account.add 1000
                             |> Expect.equal (Account 2000)
                 ]
             , describe "deduct"
@@ -31,24 +31,14 @@ playerAccountTests =
                     \() ->
                         Account 1000
                             |> Expect.all
-                                [ Accounting.Accounting.deduct 100 >> Expect.equal (Ok (Account 900))
-                                , Accounting.Accounting.deduct 1000 >> Expect.equal (Ok (Account 0))
+                                [ Account.deduct 100 >> Expect.equal (Ok (Account 900))
+                                , Account.deduct 1000 >> Expect.equal (Ok (Account 0))
                                 ]
                 , test "should fail to reduce below zero" <|
                     \() ->
                         Account 1000
-                            |> Accounting.Accounting.deduct 2000
+                            |> Account.deduct 2000
                             |> Expect.err
                 ]
-            ]
-        , describe "Ask significant questions"
-            [ test "should check if balance is at least asked amount" <|
-                \() ->
-                    Account 1000
-                        |> Expect.all
-                            [ Accounting.Accounting.hasAtLeast 500 >> Expect.equal True
-                            , Accounting.Accounting.hasAtLeast 1000 >> Expect.equal True
-                            , Accounting.Accounting.hasAtLeast 1500 >> Expect.equal False
-                            ]
             ]
         ]

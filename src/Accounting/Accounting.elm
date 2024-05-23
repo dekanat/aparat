@@ -1,5 +1,7 @@
 module Accounting.Accounting exposing (..)
 
+import Accounting.Account as Account exposing (Account(..))
+import Aggregate
 import Common.Money exposing (Money)
 import Time exposing (Weekday(..))
 
@@ -9,23 +11,13 @@ type Request
     | Replenish Money
 
 
-type Account
-    = Account Money
-
-
-add : Money -> Account -> Account
-add amount account =
-    case account of
-        Account current ->
-            Account (current + amount)
-
-
-type AccountingProblem
-    = InsufficientBalance
-
-
-type alias Model =
+type alias State =
     Account
+
+
+init : Money -> State
+init amount =
+    Account amount
 
 
 type alias Callback msg =
@@ -34,13 +26,13 @@ type alias Callback msg =
     }
 
 
-updateWith : Callback msg -> Request -> Model -> ( Model, Maybe msg )
+updateWith : Callback msg -> Aggregate.Update State Request msg
 updateWith { fulfillOrder, rejectOrder } request model =
     case request of
         Withdraw money ->
             let
                 deduction =
-                    deduct money model
+                    Account.deduct money model
             in
             case deduction of
                 Ok account ->
@@ -51,30 +43,7 @@ updateWith { fulfillOrder, rejectOrder } request model =
 
         Replenish money ->
             let
-                newAccount =
-                    add money model
+                newModel =
+                    Account.add money model
             in
-            ( newAccount, Nothing )
-
-
-deduct : Money -> Account -> Result AccountingProblem Account
-deduct amount account =
-    case account of
-        Account balance ->
-            if balance >= amount then
-                Ok (Account (balance - amount))
-
-            else
-                Err InsufficientBalance
-
-
-hasAtLeast : Money -> Account -> Bool
-hasAtLeast amount account =
-    balanceOf account >= amount
-
-
-balanceOf : Account -> Money
-balanceOf account =
-    case account of
-        Account balance ->
-            balance
+            ( newModel, Nothing )
