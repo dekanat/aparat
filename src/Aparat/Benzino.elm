@@ -2,9 +2,9 @@ module Aparat.Benzino exposing (..)
 
 import Accounting exposing (Account(..))
 import Aparat.Core exposing (DieFace(..), PossibleCombination)
-import Aparat.DisplayRound
 import Aparat.Model exposing (Model)
 import Aparat.PairOfDice exposing (fairPairOfDice)
+import Aparat.View
 import Common.Money exposing (Money)
 import Element
 import Process
@@ -49,7 +49,7 @@ init : Random.Seed -> Model
 init seed =
     { seed = seed
     , bet = 0
-    , event = ( Yek, Yek )
+    , lastEvent = ( Yek, Yek )
     }
 
 
@@ -78,9 +78,9 @@ update msg model =
                         |> Task.andThen (always <| Task.succeed (ToOthers (Payout money)))
                         |> Task.perform identity
             in
-            ( { model | event = event }, declarePayout )
+            ( { model | lastEvent = event }, declarePayout )
 
 
 view : Model -> Element.Element TalkTheTalk
-view { event } =
-    Aparat.DisplayRound.view { presentCombination = Just event }
+view { lastEvent } =
+    Aparat.View.view { lastEvent = Just lastEvent }

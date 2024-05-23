@@ -7,7 +7,7 @@ import Random
 
 type alias Model =
     { seed : Random.Seed
-    , event : PossibleCombination
+    , lastEvent : PossibleCombination
     , bet : Money
     }
 

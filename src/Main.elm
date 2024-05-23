@@ -1,8 +1,8 @@
 module Main exposing (..)
 
 import Accounting exposing (Account(..))
-import Aparat.Benzino
-import Aparat.Model
+import Aparat.Shared as Aparat
+import Aparat.View
 import Browser
 import Common.Money exposing (Money)
 import Debug exposing (toString)
@@ -41,22 +41,27 @@ type Session
     = NoSession
     | CurrentSession
         { account : Account
-        , innerGame : Aparat.Model.Model
+        , innerGame : Aparat.Model
         }
 
 
 type Msg
     = SessionInitiated Time.Posix
     | BetSubmitted Money
-    | InnerTalk Aparat.Benzino.TalkTheTalk
+    | PayoutReceived Money
 
 
 initialSessionWith : Random.Seed -> Session
 initialSessionWith seed =
     CurrentSession
         { account = Account 10000
-        , innerGame = Aparat.Benzino.init seed
+        , innerGame = Aparat.init seed
         }
+
+
+run : msg -> Cmd msg
+run m =
+    Task.perform (always m) (Task.succeed ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -77,18 +82,19 @@ update msg session =
             case state.account |> Accounting.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
-                        ( nextInnerGameState, innerCmd ) =
-                            state.innerGame |> Aparat.Benzino.update (Aparat.Benzino.BetPlaced moneyToBet)
+                        callback =
+                            { claimPayout = PayoutReceived }
 
-                        nextState =
-                            { state
-                                | account = reducedAccount
-                                , innerGame =
-                                    nextInnerGameState
-                            }
+                        ( nextInnerGameState, outcome ) =
+                            state.innerGame
+                                |> Aparat.updateWith callback (Aparat.BetPlaced moneyToBet)
                     in
-                    ( CurrentSession nextState
-                    , innerCmd |> Cmd.map InnerTalk
+                    ( CurrentSession
+                        { state
+                            | account = reducedAccount
+                            , innerGame = nextInnerGameState
+                        }
+                    , run outcome
                     )
 
                 Err _ ->
@@ -96,22 +102,13 @@ update msg session =
                     , Cmd.none
                     )
 
-        ( CurrentSession state, InnerTalk innerMsg ) ->
+        ( CurrentSession state, PayoutReceived amount ) ->
             let
-                ( nextState, cmd ) =
-                    case innerMsg of
-                        Aparat.Benzino.ToSelf igo ->
-                            state.innerGame
-                                |> Aparat.Benzino.update igo
-                                |> Tuple.mapFirst (\ig -> { state | innerGame = ig })
-                                |> Tuple.mapSecond (Cmd.map InnerTalk)
-
-                        Aparat.Benzino.ToOthers ogo ->
-                            case ogo of
-                                Aparat.Benzino.Payout x ->
-                                    ( { state | account = state.account |> Accounting.add x }, Cmd.none )
+                replenishedAccount =
+                    state.account
+                        |> Accounting.add amount
             in
-            ( CurrentSession nextState, cmd )
+            ( CurrentSession { state | account = replenishedAccount }, Cmd.none )
 
         _ ->
             ( NoSession, Cmd.none )
@@ -164,7 +161,7 @@ displayBenzinoScene { account, innerGame } =
             balanceDisplay
         , Element.el
             [ Element.centerX ]
-            (innerGame |> Aparat.Benzino.view |> Element.map InnerTalk)
+            (innerGame |> Aparat.View.view)
         , rollTrigger
         ]
 

@@ -35,3 +35,8 @@ updateWith { claimPayout } msg model =
             ( Model nextSeed (Just settledCombination)
             , callback
             )
+
+
+init : Random.Seed -> Model
+init seed =
+    Model seed Nothing
