@@ -58,20 +58,18 @@ type Msg
     | PayoutReceived Money
 
 
-initialSessionWith : Random.Seed -> Session
-initialSessionWith seed =
+initialSessionAt : Time.Posix -> Session
+initialSessionAt time =
+    let
+        seed =
+            time
+                |> Time.posixToMillis
+                |> Random.initialSeed
+    in
     CurrentSession
         { account = Account 10000
         , innerGame = Aparat.init seed
         }
-
-
-initialSessionAt : Time.Posix -> Session
-initialSessionAt time =
-    time
-        |> Time.posixToMillis
-        |> Random.initialSeed
-        |> initialSessionWith
 
 
 run : msg -> Cmd msg
@@ -119,31 +117,39 @@ initiateRoundOnAparat bet =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
-    case ( session, msg ) of
-        ( NoSession, SessionInitiated time ) ->
-            initialSessionAt time
-                |> withNoCmd
+    case session of
+        NoSession ->
+            case msg of
+                SessionInitiated time ->
+                    initialSessionAt time
+                        |> withNoCmd
 
-        ( CurrentSession state, BetOrdered moneyToBet ) ->
-            state
-                |> withdrawBetFromAccount moneyToBet
-                |> Tuple.mapBoth CurrentSession run
+                _ ->
+                    NoSession
+                        |> withNoCmd
 
-        ( CurrentSession state, BetPlaced amount ) ->
-            state
-                |> initiateRoundOnAparat amount
-                |> Tuple.mapBoth CurrentSession run
+        CurrentSession state ->
+            case msg of
+                BetOrdered moneyToBet ->
+                    state
+                        |> withdrawBetFromAccount moneyToBet
+                        |> Tuple.mapBoth CurrentSession run
 
-        ( CurrentSession state, PayoutReceived amount ) ->
-            let
-                replenishedAccount =
-                    state.account
-                        |> Accounting.add amount
-            in
-            ( CurrentSession { state | account = replenishedAccount }, Cmd.none )
+                BetPlaced amount ->
+                    state
+                        |> initiateRoundOnAparat amount
+                        |> Tuple.mapBoth CurrentSession run
 
-        _ ->
-            ( NoSession, Cmd.none )
+                PayoutReceived amount ->
+                    let
+                        replenishedAccount =
+                            state.account
+                                |> Accounting.add amount
+                    in
+                    ( CurrentSession { state | account = replenishedAccount }, Cmd.none )
+
+                _ ->
+                    ( NoSession, Cmd.none )
 
 
 initiateSession : Cmd Msg
