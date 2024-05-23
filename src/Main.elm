@@ -4,11 +4,12 @@ import Accounting exposing (Account(..))
 import Aparat.Aparat as Aparat
 import Aparat.View
 import Browser
+import Cmd.Extra exposing (..)
 import Common.Money exposing (Money)
+import ControlPanel.BetControl exposing (betControl)
 import Debug exposing (toString)
 import Element
 import Element.Border
-import Element.Input
 import Html exposing (Html)
 import Random
 import Task exposing (..)
@@ -61,6 +62,14 @@ initialSessionWith seed =
         }
 
 
+initialSessionAt : Time.Posix -> Session
+initialSessionAt time =
+    time
+        |> Time.posixToMillis
+        |> Random.initialSeed
+        |> initialSessionWith
+
+
 run : msg -> Cmd msg
 run m =
     Task.perform (always m) (Task.succeed ())
@@ -70,15 +79,8 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case ( session, msg ) of
         ( NoSession, SessionInitiated time ) ->
-            let
-                firstSeed =
-                    time
-                        |> Time.posixToMillis
-                        |> Random.initialSeed
-            in
-            ( initialSessionWith firstSeed
-            , Cmd.none
-            )
+            initialSessionAt time
+                |> withNoCmd
 
         ( CurrentSession state, BetOrdered moneyToBet ) ->
             let
@@ -146,17 +148,6 @@ displayBenzinoScene { account, innerGame } =
             case account of
                 Account balance ->
                     Element.text ("Account Balance: " ++ toString balance)
-
-        rollTrigger =
-            Element.Input.button
-                [ Element.centerX
-                , Element.Border.width 2
-                , Element.Border.rounded 2
-                , Element.padding 8
-                ]
-                { label = Element.text "Roll for 1000"
-                , onPress = Just (BetOrdered 1000)
-                }
     in
     Element.column
         [ Element.width (Element.px 520)
@@ -172,7 +163,7 @@ displayBenzinoScene { account, innerGame } =
         , Element.el
             [ Element.centerX ]
             (innerGame |> Aparat.View.view)
-        , rollTrigger
+        , betControl { orderBet = BetOrdered } ()
         ]
 
 
