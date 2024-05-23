@@ -1,13 +1,13 @@
-module Aparat.Shared exposing (..)
+module Aparat.Model exposing (..)
 
 import Aparat.Core exposing (PossibleCombination, winMultiplierFor)
-import Aparat.PairOfDice exposing (fairPairOfDice)
+import Aparat.Device exposing (fairPairOfDice)
 import Common.Money exposing (Money)
 import Random
 
 
 type Msg
-    = BetPlaced Money
+    = RoundInitiated Money
 
 
 type alias Model =
@@ -21,10 +21,15 @@ type alias Callback msg =
     }
 
 
+init : Random.Seed -> Model
+init seed =
+    Model seed Nothing
+
+
 updateWith : Callback msg -> Msg -> Model -> ( Model, msg )
 updateWith { claimPayout } msg model =
     case msg of
-        BetPlaced bet ->
+        RoundInitiated bet ->
             let
                 ( settledCombination, nextSeed ) =
                     Random.step fairPairOfDice model.seed
@@ -35,8 +40,3 @@ updateWith { claimPayout } msg model =
             ( Model nextSeed (Just settledCombination)
             , callback
             )
-
-
-init : Random.Seed -> Model
-init seed =
-    Model seed Nothing

@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Accounting exposing (Account(..))
-import Aparat.Shared as Aparat
+import Aparat.Model as Aparat
 import Aparat.View
 import Browser
 import Common.Money exposing (Money)
@@ -78,21 +78,20 @@ update msg session =
             , Cmd.none
             )
 
-        ( CurrentSession state, BetSubmitted moneyToBet ) ->
-            case state.account |> Accounting.deduct moneyToBet of
+        ( CurrentSession { account, innerGame }, BetSubmitted moneyToBet ) ->
+            case account |> Accounting.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
-                        translation =
-                            { claimPayout = PayoutReceived }
+                        evaluateRound =
+                            Aparat.updateWith { claimPayout = PayoutReceived }
 
-                        ( nextInnerGameState, callback ) =
-                            state.innerGame
-                                |> Aparat.updateWith translation (Aparat.BetPlaced moneyToBet)
+                        ( resolvedRound, callback ) =
+                            innerGame
+                                |> evaluateRound (Aparat.RoundInitiated moneyToBet)
                     in
                     ( CurrentSession
-                        { state
-                            | account = reducedAccount
-                            , innerGame = nextInnerGameState
+                        { account = reducedAccount
+                        , innerGame = resolvedRound
                         }
                     , run callback
                     )

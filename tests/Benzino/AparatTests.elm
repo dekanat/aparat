@@ -1,7 +1,7 @@
 module Benzino.AparatTests exposing (..)
 
 import Aparat.Core exposing (DieFace(..), winMultiplierFor)
-import Aparat.Shared
+import Aparat.Model exposing (Msg(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import Fuzz exposing (..)
@@ -16,14 +16,14 @@ type OuterTypes
 updateTests : Test
 updateTests =
     let
-        initialState : Aparat.Shared.Model
+        initialState : Aparat.Model.Model
         initialState =
             { seed = Random.initialSeed 0
             , lastEvent = Nothing
             }
 
         update =
-            Aparat.Shared.updateWith { claimPayout = PayoutReceived }
+            Aparat.Model.updateWith { claimPayout = PayoutReceived }
 
         ensureSomeValue : Maybe a -> Expectation
         ensureSomeValue m =
@@ -36,7 +36,7 @@ updateTests =
     in
     test "round resolves as expected" <|
         \() ->
-            update (Aparat.Shared.BetPlaced 100) initialState
+            update (RoundInitiated 100) initialState
                 |> Expect.all
                     [ Tuple.first >> .lastEvent >> ensureSomeValue
                     ]

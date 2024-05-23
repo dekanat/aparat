@@ -1,4 +1,4 @@
-module Aparat.PairOfDice exposing (..)
+module Aparat.Device exposing (..)
 
 import Aparat.Core exposing (DieFace(..), PossibleCombination)
 import Random
