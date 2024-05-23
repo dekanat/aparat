@@ -38,8 +38,8 @@ pictogramFor ( rolledA, rolledB ) =
         ]
 
 
-view : { a | lastEvent : Maybe PossibleCombination } -> Element.Element msg
-view { lastEvent } =
+gameScene : { a | lastEvent : Maybe PossibleCombination } -> Element.Element msg
+gameScene { lastEvent } =
     let
         exampleCombination =
             ( Shesh, Yek )
