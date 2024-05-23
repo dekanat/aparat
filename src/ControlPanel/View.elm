@@ -1,4 +1,4 @@
-module ControlPanel.BetControl exposing (..)
+module ControlPanel.View exposing (..)
 
 import Common.Money exposing (Money)
 import Element

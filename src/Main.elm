@@ -7,8 +7,7 @@ import Aparat.View
 import Browser
 import Cmd.Extra exposing (..)
 import Common.Money exposing (Money)
-import ControlPanel.BetControl exposing (betControl)
-import Debug exposing (toString)
+import ControlPanel.View
 import Element
 import Element.Border
 import Html exposing (Html)
@@ -156,13 +155,12 @@ displayBenzinoScene { account, innerGame } =
         , Element.padding 32
         , Element.spacing 8
         ]
-        [ Element.el
-            [ Element.alignRight ]
+        [ Element.el [ Element.alignRight ]
             (Accounting.View.balanceDisplay account)
-        , Element.el
-            [ Element.centerX ]
-            (innerGame |> Aparat.View.view)
-        , betControl { orderBet = BetOrdered } ()
+        , Element.el [ Element.centerX ]
+            (Aparat.View.gameScene innerGame)
+        , Element.el [ Element.centerX ]
+            (ControlPanel.View.betControl { orderBet = BetOrdered } ())
         ]
 
 
