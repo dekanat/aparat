@@ -84,33 +84,37 @@ update msg session =
 
         ( CurrentSession state, BetOrdered moneyToBet ) ->
             let
-                request =
-                    Accounting.Withdraw moneyToBet
-
                 orderBet =
-                    Accounting.updateWith
-                        { fulfillOrder = BetPlaced
-                        , rejectOrder = Noop
-                        }
+                    Accounting.Withdraw moneyToBet
+                        |> Accounting.updateWith
+                            { fulfillOrder = BetPlaced
+                            , rejectOrder = Noop
+                            }
 
                 ( modifiedAccount, callback ) =
-                    state.account
-                        |> orderBet request
+                    orderBet state.account
+
+                updatedState =
+                    { state | account = modifiedAccount }
             in
-            ( CurrentSession { state | account = modifiedAccount }
+            ( CurrentSession updatedState
             , run callback
             )
 
         ( CurrentSession state, BetPlaced amount ) ->
             let
-                ( resolvedRound, callback ) =
-                    state.innerGame
-                        |> Aparat.updateWith { claimPayout = PayoutReceived } (Aparat.RoundInitiated amount)
+                resolveRound =
+                    Aparat.InitiateRound amount
+                        |> Aparat.updateWith
+                            { claimPayout = PayoutReceived }
+
+                ( resolution, callback ) =
+                    resolveRound state.innerGame
+
+                updatedState =
+                    { state | innerGame = resolution }
             in
-            ( CurrentSession
-                { state
-                    | innerGame = resolvedRound
-                }
+            ( CurrentSession updatedState
             , run callback
             )
 
