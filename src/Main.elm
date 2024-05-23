@@ -31,6 +31,14 @@ main =
         }
 
 
+type Msg
+    = SessionInitiated Time.Posix
+    | BetOrdered Money
+    | BetPlaced Money
+    | PayoutReceived Money
+    | Noop
+
+
 
 -- MODEL
 
@@ -50,14 +58,6 @@ type alias SessionState =
     }
 
 
-type Msg
-    = SessionInitiated Time.Posix
-    | Noop
-    | BetOrdered Money
-    | BetPlaced Money
-    | PayoutReceived Money
-
-
 runOptional : Maybe msg -> Cmd msg
 runOptional m =
     case m of
@@ -68,8 +68,8 @@ runOptional m =
             Cmd.none
 
 
-evolve : Msg -> SessionState -> ( SessionState, Maybe Msg )
-evolve msg state =
+evolveSessionState : Msg -> SessionState -> ( SessionState, Maybe Msg )
+evolveSessionState msg state =
     let
         cycleOverAccounting =
             Aggregate.performCycleOver
@@ -97,12 +97,12 @@ evolve msg state =
 
         BetPlaced bet ->
             let
-                initiateRound =
+                evaluateRound =
                     Aparat.InitiateRound bet
                         |> Aparat.updateWith
                             { claimPayout = PayoutReceived }
             in
-            state |> cycleOverAparat initiateRound
+            state |> cycleOverAparat evaluateRound
 
         PayoutReceived totalPayout ->
             let
@@ -126,34 +126,33 @@ init _ =
     )
 
 
+arrangeSession : Money -> Random.Seed -> Session
+arrangeSession startedBalance masterSeed =
+    CurrentSession
+        { account = Accounting.init startedBalance
+        , innerGame = Aparat.init masterSeed
+        }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case session of
+        CurrentSession state ->
+            state
+                |> evolveSessionState msg
+                |> Tuple.mapBoth CurrentSession runOptional
+
         NoSession ->
             case msg of
                 SessionInitiated time ->
-                    let
-                        seed =
-                            time
-                                |> Time.posixToMillis
-                                |> Random.initialSeed
-
-                        initialState =
-                            { account = Accounting.init 10000
-                            , innerGame = Aparat.init seed
-                            }
-                    in
-                    CurrentSession initialState
+                    time
+                        |> (Random.initialSeed << Time.posixToMillis)
+                        |> arrangeSession 10000
                         |> withNoCmd
 
                 _ ->
                     NoSession
                         |> withNoCmd
-
-        CurrentSession state ->
-            state
-                |> evolve msg
-                |> Tuple.mapBoth CurrentSession runOptional
 
 
 displayBenzinoScene { account, innerGame } =
