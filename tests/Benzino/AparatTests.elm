@@ -1,7 +1,6 @@
 module Benzino.AparatTests exposing (..)
 
-import Aparat.Benzino
-import Aparat.Core exposing (DieFace(..))
+import Aparat.Core exposing (DieFace(..), winMultiplierFor)
 import Aparat.Shared
 import Common.Money exposing (Money)
 import Expect exposing (..)
@@ -49,11 +48,11 @@ aparatTests =
         [ describe "Determine Payout"
             [ test "that apprat notifies of wins" <|
                 \() ->
-                    Aparat.Benzino.calculatePayout 100 ( Panj, Panj )
-                        |> Expect.equal 600
+                    winMultiplierFor ( Panj, Panj )
+                        |> Expect.equal 6
             , test "that apprat notifies of lose" <|
                 \() ->
-                    Aparat.Benzino.calculatePayout 100 ( Panj, Yek )
+                    winMultiplierFor ( Panj, Yek )
                         |> Expect.equal 0
             ]
         ]

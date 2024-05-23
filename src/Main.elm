@@ -82,19 +82,19 @@ update msg session =
             case state.account |> Accounting.deduct moneyToBet of
                 Ok reducedAccount ->
                     let
-                        callback =
+                        translation =
                             { claimPayout = PayoutReceived }
 
-                        ( nextInnerGameState, outcome ) =
+                        ( nextInnerGameState, callback ) =
                             state.innerGame
-                                |> Aparat.updateWith callback (Aparat.BetPlaced moneyToBet)
+                                |> Aparat.updateWith translation (Aparat.BetPlaced moneyToBet)
                     in
                     ( CurrentSession
                         { state
                             | account = reducedAccount
                             , innerGame = nextInnerGameState
                         }
-                    , run outcome
+                    , run callback
                     )
 
                 Err _ ->
