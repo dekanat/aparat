@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Accounting.Accounting as Accounting exposing (Account(..))
 import Accounting.View
+import Aggregate as Aggregate exposing (Aggregate)
 import Aparat.Aparat as Aparat
 import Aparat.View
 import Browser
@@ -40,10 +41,13 @@ type alias Model =
 
 type Session
     = NoSession
-    | CurrentSession
-        { account : Account
-        , innerGame : Aparat.Model
-        }
+    | CurrentSession SessionState
+
+
+type alias SessionState =
+    { account : Account
+    , innerGame : Aparat.Model
+    }
 
 
 type Msg
@@ -75,6 +79,44 @@ run m =
     Task.perform (always m) (Task.succeed ())
 
 
+accountingLens : Aggregate.Lens SessionState Accounting.Model
+accountingLens =
+    Aggregate.Lens
+        .account
+        (\new state -> { state | account = new })
+
+
+withdrawBetFromAccount : Money -> SessionState -> ( SessionState, Msg )
+withdrawBetFromAccount bet =
+    let
+        updateWithProperCallback =
+            Accounting.updateWith
+                { fulfillOrder = BetPlaced
+                , rejectOrder = Noop
+                }
+    in
+    Accounting.Withdraw bet
+        |> Aggregate.performCycle accountingLens updateWithProperCallback
+
+
+aparatLens : Aggregate.Lens SessionState Aparat.Model
+aparatLens =
+    { get = .innerGame
+    , set = \new state -> { state | innerGame = new }
+    }
+
+
+initiateRoundOnAparat : Money -> SessionState -> ( SessionState, Msg )
+initiateRoundOnAparat bet =
+    let
+        updateWithProperCallback =
+            Aparat.updateWith
+                { claimPayout = PayoutReceived }
+    in
+    Aparat.InitiateRound bet
+        |> Aggregate.performCycle aparatLens updateWithProperCallback
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case ( session, msg ) of
@@ -83,40 +125,14 @@ update msg session =
                 |> withNoCmd
 
         ( CurrentSession state, BetOrdered moneyToBet ) ->
-            let
-                orderBet =
-                    Accounting.Withdraw moneyToBet
-                        |> Accounting.updateWith
-                            { fulfillOrder = BetPlaced
-                            , rejectOrder = Noop
-                            }
-
-                ( modifiedAccount, callback ) =
-                    orderBet state.account
-
-                updatedState =
-                    { state | account = modifiedAccount }
-            in
-            ( CurrentSession updatedState
-            , run callback
-            )
+            state
+                |> withdrawBetFromAccount moneyToBet
+                |> Tuple.mapBoth CurrentSession run
 
         ( CurrentSession state, BetPlaced amount ) ->
-            let
-                resolveRound =
-                    Aparat.InitiateRound amount
-                        |> Aparat.updateWith
-                            { claimPayout = PayoutReceived }
-
-                ( resolution, callback ) =
-                    resolveRound state.innerGame
-
-                updatedState =
-                    { state | innerGame = resolution }
-            in
-            ( CurrentSession updatedState
-            , run callback
-            )
+            state
+                |> initiateRoundOnAparat amount
+                |> Tuple.mapBoth CurrentSession run
 
         ( CurrentSession state, PayoutReceived amount ) ->
             let
