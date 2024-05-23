@@ -17,11 +17,9 @@ add amount (Account balance) =
 
 
 deduct : Money -> Account -> Result AccountingProblem Account
-deduct amount account =
-    case account of
-        Account balance ->
-            if balance >= amount then
-                Ok (Account (balance - amount))
+deduct amount (Account balance) =
+    if balance >= amount then
+        Ok (Account (balance - amount))
 
-            else
-                Err InsufficientBalance
+    else
+        Err InsufficientBalance
