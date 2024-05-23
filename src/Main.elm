@@ -1,6 +1,7 @@
 module Main exposing (..)
 
-import Accounting exposing (Account(..))
+import Accounting.Accounting as Accounting exposing (Account(..))
+import Accounting.View
 import Aparat.Aparat as Aparat
 import Aparat.View
 import Browser
@@ -147,12 +148,6 @@ init _ =
 
 
 displayBenzinoScene { account, innerGame } =
-    let
-        balanceDisplay =
-            case account of
-                Account balance ->
-                    Element.text ("Account Balance: " ++ toString balance)
-    in
     Element.column
         [ Element.width (Element.px 520)
         , Element.centerX
@@ -163,7 +158,7 @@ displayBenzinoScene { account, innerGame } =
         ]
         [ Element.el
             [ Element.alignRight ]
-            balanceDisplay
+            (Accounting.View.balanceDisplay account)
         , Element.el
             [ Element.centerX ]
             (innerGame |> Aparat.View.view)
