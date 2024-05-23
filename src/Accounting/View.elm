@@ -1,6 +1,6 @@
 module Accounting.View exposing (..)
 
-import Accounting.Accounting exposing (Account(..))
+import Accounting.Account exposing (Account(..))
 import Debug exposing (toString)
 import Element
 

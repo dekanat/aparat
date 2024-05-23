@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Accounting.Accounting as Accounting exposing (Account(..))
+import Accounting.Accounting as Accounting
 import Accounting.View
 import Aggregate as Aggregate
 import Aparat.Aparat as Aparat
@@ -12,7 +12,6 @@ import ControlPanel.View
 import Element
 import Element.Border
 import Html exposing (Html)
-import List.Extra exposing (cycle)
 import Random
 import Task exposing (..)
 import Time exposing (..)
@@ -46,7 +45,7 @@ type Session
 
 
 type alias SessionState =
-    { account : Account
+    { account : Accounting.State
     , innerGame : Aparat.State
     }
 
@@ -59,51 +58,14 @@ type Msg
     | PayoutReceived Money
 
 
-run : Maybe msg -> Cmd msg
-run m =
+runOptional : Maybe msg -> Cmd msg
+runOptional m =
     case m of
         Just message ->
             Task.perform (always message) (Task.succeed ())
 
         Nothing ->
             Cmd.none
-
-
-lensForAccounting : Aggregate.Lens SessionState Accounting.Model
-lensForAccounting =
-    { get = .account
-    , set = \new state -> { state | account = new }
-    }
-
-
-withdrawBetFromAccount bet =
-    Accounting.updateWith
-        { fulfillOrder = BetPlaced
-        , rejectOrder = Noop
-        }
-        (Accounting.Withdraw bet)
-
-
-replenishAccount : Money -> Aggregate.UpdateInner Accounting.Model Msg
-replenishAccount payout =
-    Accounting.updateWith
-        { fulfillOrder = \_ -> Noop
-        , rejectOrder = Noop
-        }
-        (Accounting.Replenish payout)
-
-
-lensForAparat : Aggregate.Lens SessionState Aparat.State
-lensForAparat =
-    { get = .innerGame
-    , set = \new state -> { state | innerGame = new }
-    }
-
-
-initiateRoundOnAparat bet =
-    Aparat.updateWith
-        { claimPayout = PayoutReceived }
-        (Aparat.InitiateRound bet)
 
 
 evolve : Msg -> SessionState -> ( SessionState, Maybe Msg )
@@ -123,13 +85,35 @@ evolve msg state =
     in
     case msg of
         BetOrdered amountToBet ->
-            cycleOverAccounting (withdrawBetFromAccount amountToBet) state
+            let
+                withdrawBet =
+                    Accounting.Withdraw amountToBet
+                        |> Accounting.updateWith
+                            { fulfillOrder = BetPlaced
+                            , rejectOrder = Noop
+                            }
+            in
+            state |> cycleOverAccounting withdrawBet
 
         BetPlaced bet ->
-            cycleOverAparat (initiateRoundOnAparat bet) state
+            let
+                initiateRound =
+                    Aparat.InitiateRound bet
+                        |> Aparat.updateWith
+                            { claimPayout = PayoutReceived }
+            in
+            state |> cycleOverAparat initiateRound
 
         PayoutReceived totalPayout ->
-            cycleOverAccounting (replenishAccount totalPayout) state
+            let
+                collectPayout =
+                    Accounting.Replenish totalPayout
+                        |> Accounting.updateWith
+                            { fulfillOrder = \_ -> Noop
+                            , rejectOrder = Noop
+                            }
+            in
+            state |> cycleOverAccounting collectPayout
 
         _ ->
             ( state, Nothing )
@@ -142,29 +126,25 @@ init _ =
     )
 
 
-initSessionAt : Time.Posix -> ( Model, Cmd Msg )
-initSessionAt time =
-    let
-        seed =
-            time
-                |> Time.posixToMillis
-                |> Random.initialSeed
-
-        initialState =
-            { account = Account 10000
-            , innerGame = Aparat.init seed
-            }
-    in
-    ( CurrentSession initialState, Cmd.none )
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case session of
         NoSession ->
             case msg of
                 SessionInitiated time ->
-                    initSessionAt time
+                    let
+                        seed =
+                            time
+                                |> Time.posixToMillis
+                                |> Random.initialSeed
+
+                        initialState =
+                            { account = Accounting.init 10000
+                            , innerGame = Aparat.init seed
+                            }
+                    in
+                    CurrentSession initialState
+                        |> withNoCmd
 
                 _ ->
                     NoSession
@@ -173,7 +153,7 @@ update msg session =
         CurrentSession state ->
             state
                 |> evolve msg
-                |> Tuple.mapBoth CurrentSession run
+                |> Tuple.mapBoth CurrentSession runOptional
 
 
 displayBenzinoScene { account, innerGame } =

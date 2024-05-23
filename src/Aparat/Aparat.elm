@@ -1,6 +1,6 @@
 module Aparat.Aparat exposing (..)
 
-import Aggregate exposing (Update)
+import Aggregate
 import Aparat.Core exposing (PossibleCombination, winMultiplierFor)
 import Aparat.Device exposing (fairPairOfDice)
 import Common.Money exposing (Money)
