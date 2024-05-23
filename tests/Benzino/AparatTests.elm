@@ -33,22 +33,30 @@ type alias Callbacks msg =
     }
 
 
-updateUsing : Callbacks msg -> Msg -> Model -> ( Model, Cmd msg )
-updateUsing { settlePayout } msg model =
+type Outcome
+    = Payout Money
+
+
+update : Msg -> Model -> ( Model, Outcome )
+update msg model =
     case msg of
         BetPlaced bet ->
             let
                 ( settledCombination, nextSeed ) =
                     Random.step fairPairOfDice model.seed
 
-                payout =
-                    bet * payoutMultiplierFor settledCombination
-
                 callback =
-                    Task.succeed payout
-                        |> Task.perform settlePayout
+                    Payout (bet * payoutMultiplierFor settledCombination)
+
+                nextModel =
+                    { model
+                        | seed = nextSeed
+                        , lastEvent = Just settledCombination
+                    }
             in
-            ( { model | seed = nextSeed, lastEvent = Just settledCombination }, callback )
+            ( nextModel
+            , callback
+            )
 
 
 updateTests : Test
@@ -60,19 +68,19 @@ updateTests =
             , lastEvent = Nothing
             }
 
-        update : Core.Msg -> Core.Model -> ( Core.Model, Cmd OuterTypes )
-        update =
-            updateUsing
-                { settlePayout = RoundResolved }
+        ensurePresent : Maybe a -> Expectation
+        ensurePresent =
+            Maybe.map (always True)
+                >> Maybe.withDefault False
+                >> Expect.equal True
 
-        ( evolvedState, producedCmd ) =
-            update (Core.BetPlaced 100) initialState
+        -- ( evolvedState, producedCmd ) =
     in
     test "round resolves as expected" <|
         \() ->
-            evolvedState
+            update (Core.BetPlaced 100) initialState
                 |> Expect.all
-                    [ .lastEvent >> Maybe.map (always True) >> Maybe.withDefault False >> Expect.equal True
+                    [ Tuple.first >> .lastEvent >> ensurePresent
                     ]
 
 
