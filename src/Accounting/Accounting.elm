@@ -12,12 +12,12 @@ type Request
 
 
 type alias State =
-    { currentBalance : Money }
+    Account
 
 
 init : Money -> State
 init amount =
-    { currentBalance = amount }
+    Account amount
 
 
 type alias Callback msg =
@@ -27,20 +27,23 @@ type alias Callback msg =
 
 
 updateWith : Callback msg -> Aggregate.Update State Request msg
-updateWith { fulfillOrder, rejectOrder } request { currentBalance } =
+updateWith { fulfillOrder, rejectOrder } request model =
     case request of
         Withdraw money ->
-            if currentBalance >= money then
-                ( { currentBalance = currentBalance - money }
-                , Just (fulfillOrder money)
-                )
+            let
+                deduction =
+                    Account.deduct money model
+            in
+            case deduction of
+                Ok account ->
+                    ( account, Just (fulfillOrder money) )
 
-            else
-                ( { currentBalance = currentBalance }
-                , Just rejectOrder
-                )
+                Err _ ->
+                    ( model, Just rejectOrder )
 
         Replenish money ->
-            ( { currentBalance = currentBalance + money }
-            , Nothing
-            )
+            let
+                newModel =
+                    Account.add money model
+            in
+            ( newModel, Nothing )

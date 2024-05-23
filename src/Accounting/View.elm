@@ -5,5 +5,5 @@ import Debug exposing (toString)
 import Element
 
 
-balanceDisplay { currentBalance } =
-    Element.text ("Account Balance: " ++ toString currentBalance)
+balanceDisplay (Account balance) =
+    Element.text ("Account Balance: " ++ toString balance)

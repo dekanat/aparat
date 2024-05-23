@@ -18,39 +18,39 @@ accountingTests =
         [ describe "Withdraw"
             [ test "fulfills when the balance allows it" <|
                 \() ->
-                    { currentBalance = 1200 }
+                    Account 1200
                         |> updateWith
                             { fulfillOrder = always Expect.pass
                             , rejectOrder = Expect.fail "But balance was sufficient"
                             }
                             (Withdraw 1000)
                         |> Expect.all
-                            [ Tuple.first >> .currentBalance >> Expect.equal 200
+                            [ Tuple.first >> balanceOf >> Expect.equal 200
                             , Tuple.second >> Maybe.withDefault (Expect.fail "Should yield")
                             ]
             , test "rejects when the balance does not allows it" <|
                 \() ->
-                    { currentBalance = 800 }
+                    Account 800
                         |> updateWith
                             { fulfillOrder = always (Expect.fail "But balance was sufficient")
                             , rejectOrder = Expect.pass
                             }
                             (Withdraw 1000)
                         |> Expect.all
-                            [ Tuple.first >> .currentBalance >> Expect.equal 800
+                            [ Tuple.first >> balanceOf >> Expect.equal 800
                             , Tuple.second >> Maybe.withDefault (Expect.fail "Should yield")
                             ]
             ]
         , test "Replenish" <|
             \() ->
-                { currentBalance = 800 }
+                Account 800
                     |> updateWith
                         { fulfillOrder = always (Expect.fail "Nothing to yield")
                         , rejectOrder = Expect.fail "Nothing to yield"
                         }
                         (Replenish 200)
                     |> Expect.all
-                        [ Tuple.first >> .currentBalance >> Expect.equal 1000
+                        [ Tuple.first >> balanceOf >> Expect.equal 1000
                         , Tuple.second >> Maybe.withDefault Expect.pass
                         ]
         ]
