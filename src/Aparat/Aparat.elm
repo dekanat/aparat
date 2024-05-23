@@ -1,5 +1,6 @@
 module Aparat.Aparat exposing (..)
 
+import Aggregate exposing (Update)
 import Aparat.Core exposing (PossibleCombination, winMultiplierFor)
 import Aparat.Device exposing (fairPairOfDice)
 import Common.Money exposing (Money)
@@ -10,15 +11,15 @@ type Request
     = InitiateRound Money
 
 
-type alias Model =
+type alias State =
     { seed : Random.Seed
     , lastEvent : Maybe PossibleCombination
     }
 
 
-init : Random.Seed -> Model
+init : Random.Seed -> State
 init seed =
-    Model seed Nothing
+    State seed Nothing
 
 
 type alias Callback msg =
@@ -26,7 +27,7 @@ type alias Callback msg =
     }
 
 
-updateWith : Callback msg -> Request -> Model -> ( Model, Maybe msg )
+updateWith : Callback msg -> Aggregate.Update State Request msg
 updateWith { claimPayout } msg model =
     case msg of
         InitiateRound bet ->
@@ -37,6 +38,6 @@ updateWith { claimPayout } msg model =
                 payout =
                     bet * winMultiplierFor settledCombination
             in
-            ( Model nextSeed (Just settledCombination)
+            ( State nextSeed (Just settledCombination)
             , Just (claimPayout payout)
             )
