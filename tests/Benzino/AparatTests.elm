@@ -1,7 +1,7 @@
 module Benzino.AparatTests exposing (..)
 
+import Aparat.Aparat as Aparat exposing (Request(..))
 import Aparat.Core exposing (DieFace(..), winMultiplierFor)
-import Aparat.Model exposing (Request(..))
 import Common.Money exposing (Money)
 import Expect exposing (..)
 import Fuzz exposing (..)
@@ -16,14 +16,14 @@ type OuterTypes
 updateTests : Test
 updateTests =
     let
-        initialState : Aparat.Model.Model
+        initialState : Aparat.Model
         initialState =
             { seed = Random.initialSeed 0
             , lastEvent = Nothing
             }
 
         update =
-            Aparat.Model.updateWith { claimPayout = PayoutReceived }
+            Aparat.updateWith { claimPayout = PayoutReceived }
 
         ensureSomeValue : Maybe a -> Expectation
         ensureSomeValue m =

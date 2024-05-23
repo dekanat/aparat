@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Accounting exposing (Account(..))
-import Aparat.Model as Aparat
+import Aparat.Aparat as Aparat
 import Aparat.View
 import Browser
 import Common.Money exposing (Money)

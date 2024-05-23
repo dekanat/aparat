@@ -1,4 +1,4 @@
-module Aparat.Model exposing (..)
+module Aparat.Aparat exposing (..)
 
 import Aparat.Core exposing (PossibleCombination, winMultiplierFor)
 import Aparat.Device exposing (fairPairOfDice)
