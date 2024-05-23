@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Accounting.Accounting as Accounting exposing (Account(..))
 import Accounting.View
-import Aggregate as Aggregate exposing (Aggregate)
+import Aggregate as Aggregate
 import Aparat.Aparat as Aparat
 import Aparat.View
 import Browser
@@ -58,23 +58,14 @@ type Msg
     | PayoutReceived Money
 
 
-initialSessionAt : Time.Posix -> Session
-initialSessionAt time =
-    let
-        seed =
-            time
-                |> Time.posixToMillis
-                |> Random.initialSeed
-    in
-    CurrentSession
-        { account = Account 10000
-        , innerGame = Aparat.init seed
-        }
-
-
-run : msg -> Cmd msg
+run : Maybe msg -> Cmd msg
 run m =
-    Task.perform (always m) (Task.succeed ())
+    case m of
+        Just message ->
+            Task.perform (always message) (Task.succeed ())
+
+        Nothing ->
+            Cmd.none
 
 
 accountingLens : Aggregate.Lens SessionState Accounting.Model
@@ -84,7 +75,7 @@ accountingLens =
         (\new state -> { state | account = new })
 
 
-withdrawBetFromAccount : Money -> SessionState -> ( SessionState, Msg )
+withdrawBetFromAccount : Money -> SessionState -> ( SessionState, Maybe Msg )
 withdrawBetFromAccount bet =
     let
         updateWithProperCallback =
@@ -104,7 +95,7 @@ aparatLens =
     }
 
 
-initiateRoundOnAparat : Money -> SessionState -> ( SessionState, Msg )
+initiateRoundOnAparat : Money -> SessionState -> ( SessionState, Maybe Msg )
 initiateRoundOnAparat bet =
     let
         updateWithProperCallback =
@@ -115,57 +106,68 @@ initiateRoundOnAparat bet =
         |> Aggregate.performCycle aparatLens updateWithProperCallback
 
 
+evolve : Msg -> SessionState -> ( SessionState, Maybe Msg )
+evolve msg state =
+    case msg of
+        BetOrdered amount ->
+            state
+                |> withdrawBetFromAccount amount
+
+        BetPlaced amount ->
+            state
+                |> initiateRoundOnAparat amount
+
+        PayoutReceived amount ->
+            let
+                replenishedAccount =
+                    state.account
+                        |> Accounting.add amount
+            in
+            ( { state | account = replenishedAccount }, Nothing )
+
+        _ ->
+            ( state, Nothing )
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( NoSession
+    , Task.perform SessionInitiated Time.now
+    )
+
+
+initSessionAt : Time.Posix -> ( Model, Cmd Msg )
+initSessionAt time =
+    let
+        seed =
+            time
+                |> Time.posixToMillis
+                |> Random.initialSeed
+
+        initialState =
+            { account = Account 10000
+            , innerGame = Aparat.init seed
+            }
+    in
+    ( CurrentSession initialState, Cmd.none )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case session of
         NoSession ->
             case msg of
                 SessionInitiated time ->
-                    initialSessionAt time
-                        |> withNoCmd
+                    initSessionAt time
 
                 _ ->
                     NoSession
                         |> withNoCmd
 
         CurrentSession state ->
-            case msg of
-                BetOrdered moneyToBet ->
-                    state
-                        |> withdrawBetFromAccount moneyToBet
-                        |> Tuple.mapBoth CurrentSession run
-
-                BetPlaced amount ->
-                    state
-                        |> initiateRoundOnAparat amount
-                        |> Tuple.mapBoth CurrentSession run
-
-                PayoutReceived amount ->
-                    let
-                        replenishedAccount =
-                            state.account
-                                |> Accounting.add amount
-                    in
-                    ( CurrentSession { state | account = replenishedAccount }, Cmd.none )
-
-                _ ->
-                    ( NoSession, Cmd.none )
-
-
-initiateSession : Cmd Msg
-initiateSession =
-    Task.perform SessionInitiated Time.now
-
-
-
--- VIEW
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( NoSession
-    , initiateSession
-    )
+            state
+                |> evolve msg
+                |> Tuple.mapBoth CurrentSession run
 
 
 displayBenzinoScene { account, innerGame } =

@@ -7,17 +7,11 @@ type alias Lens state sub =
     }
 
 
-type alias Aggregate state sub req msg =
-    { lens : Lens state sub
-    , update : req -> sub -> ( sub, msg )
-    }
-
-
 type alias Update sub req msg =
-    req -> sub -> ( sub, msg )
+    req -> sub -> ( sub, Maybe msg )
 
 
-performCycle : Lens state sub -> Update sub req msg -> req -> state -> ( state, msg )
+performCycle : Lens state sub -> Update sub req msg -> req -> state -> ( state, Maybe msg )
 performCycle lens update req state =
     let
         getBoudedState =
