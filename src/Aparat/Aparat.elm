@@ -26,7 +26,7 @@ type alias Callback msg =
     }
 
 
-updateWith : Callback msg -> Request -> Model -> ( Model, msg )
+updateWith : Callback msg -> Request -> Model -> ( Model, Maybe msg )
 updateWith { claimPayout } msg model =
     case msg of
         InitiateRound bet ->
@@ -38,5 +38,5 @@ updateWith { claimPayout } msg model =
                     bet * winMultiplierFor settledCombination
             in
             ( Model nextSeed (Just settledCombination)
-            , claimPayout payout
+            , Just (claimPayout payout)
             )
