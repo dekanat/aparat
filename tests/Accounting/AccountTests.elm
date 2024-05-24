@@ -1,12 +1,12 @@
-module AccountTests exposing (..)
+module Accounting.AccountTests exposing (..)
 
-import Account exposing (Account(..))
-import Expect exposing (..)
+import Accounting.Account as Account exposing (Account(..))
+import Expect
 import Test exposing (..)
 
 
-playerAccountTests : Test
-playerAccountTests =
+accountTests : Test
+accountTests =
     describe "Account"
         [ describe "Changing balance of an account"
             [ describe "add money"
@@ -30,15 +30,5 @@ playerAccountTests =
                             |> Account.deduct 2000
                             |> Expect.err
                 ]
-            ]
-        , describe "Ask significant questions"
-            [ test "should check if balance is at least asked amount" <|
-                \() ->
-                    Account 1000
-                        |> Expect.all
-                            [ Account.hasAtLeast 500 >> Expect.equal True
-                            , Account.hasAtLeast 1000 >> Expect.equal True
-                            , Account.hasAtLeast 1500 >> Expect.equal False
-                            ]
             ]
         ]

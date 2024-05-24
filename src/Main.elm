@@ -1,22 +1,20 @@
 module Main exposing (..)
 
-import Account exposing (Account(..))
-import Benzino
+import Accounting.Accounting as Accounting
+import Accounting.View
+import Aggregate
+import Aparat.Aparat as Aparat
+import Aparat.View
 import Browser
-import Common.Die exposing (Face(..), glyphFor)
+import Cmd.Extra exposing (..)
 import Common.Money exposing (Money)
-import Debug exposing (toString)
+import ControlPanel.View
 import Element
 import Element.Border
-import Element.Font
-import Element.Input
-import History exposing (History)
 import Html exposing (Html)
 import Random
-import Session exposing (Session, SessionState)
-import SessionPlot exposing (plotSession)
-import Task exposing (..)
-import Time exposing (..)
+import Task
+import Time
 
 
 
@@ -33,111 +31,131 @@ main =
         }
 
 
+type Msg
+    = SessionInitiated Time.Posix
+    | BetOrdered Money
+    | BetPlaced Money
+    | PayoutReceived Money
+    | Noop
+
+
 
 -- MODEL
 
 
 type alias Model =
-    { session : Session Benzino.RoundDetails
-    , startTime : Time.Posix
+    Session
+
+
+type Session
+    = NoSession
+    | CurrentSession SessionState
+
+
+type alias SessionState =
+    { account : Accounting.State
+    , innerGame : Aparat.State
     }
 
 
-type Msg
-    = PlayerSubmittedBet Money
-    | SessionInitiated Time.Posix
+runOptional : Maybe msg -> Cmd msg
+runOptional m =
+    case m of
+        Just message ->
+            Task.perform (always message) (Task.succeed ())
+
+        Nothing ->
+            Cmd.none
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg session =
+evolveSessionState : Msg -> SessionState -> ( SessionState, Maybe Msg )
+evolveSessionState msg state =
+    let
+        cycleOverAccounting =
+            Aggregate.performCycleOver
+                { get = .account
+                , set = \new givenState -> { givenState | account = new }
+                }
+
+        cycleOverAparat =
+            Aggregate.performCycleOver
+                { get = .innerGame
+                , set = \new givenState -> { givenState | innerGame = new }
+                }
+    in
     case msg of
-        PlayerSubmittedBet moneyToBet ->
-            case Benzino.playOnce moneyToBet session.session of
-                Ok ctx ->
-                    ( { session = ctx, startTime = session.startTime }
-                    , Cmd.none
-                    )
+        BetOrdered amountToBet ->
+            let
+                withdrawBet =
+                    Accounting.Withdraw amountToBet
+                        |> Accounting.updateWith
+                            { fulfillOrder = BetPlaced
+                            , rejectOrder = Noop
+                            }
+            in
+            state |> cycleOverAccounting withdrawBet
 
-                Err _ ->
-                    ( session, Cmd.none )
+        BetPlaced bet ->
+            let
+                evaluateRound =
+                    Aparat.InitiateRound bet
+                        |> Aparat.updateWith
+                            { claimPayout = PayoutReceived }
+            in
+            state |> cycleOverAparat evaluateRound
 
-        SessionInitiated time ->
-            ( { session =
-                    ( Tuple.first session.session
-                    , Random.initialSeed (Time.posixToMillis time)
-                    )
-              , startTime = time
-              }
-            , Cmd.none
-            )
+        PayoutReceived totalPayout ->
+            let
+                collectPayout =
+                    Accounting.Replenish totalPayout
+                        |> Accounting.updateWith
+                            { fulfillOrder = \_ -> Noop
+                            , rejectOrder = Noop
+                            }
+            in
+            state |> cycleOverAccounting collectPayout
 
-
-initiateSession : Cmd Msg
-initiateSession =
-    Task.perform SessionInitiated Time.now
-
-
-
--- VIEW
+        _ ->
+            ( state, Nothing )
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { session =
-            ( { history = History.empty
-              , account = Account 10000
-              }
-            , Random.initialSeed 0
-            )
-      , startTime = Time.millisToPosix 0
-      }
-    , initiateSession
+    ( NoSession
+    , Task.perform SessionInitiated Time.now
     )
 
 
-rollResultsDisplay : History Benzino.RoundDetails -> Element.Element Msg
-rollResultsDisplay history =
-    let
-        xxlSize =
-            200
-
-        pictogramFor : ( Face, Face ) -> Element.Element Msg
-        pictogramFor ( rolledA, rolledB ) =
-            Element.row
-                [ Element.Font.size xxlSize
-                , Element.spacing 8
-                ]
-                [ Element.text (glyphFor rolledA)
-                , Element.text (glyphFor rolledB)
-                ]
-    in
-    case History.last history of
-        Nothing ->
-            pictogramFor ( Shesh, Yek )
-
-        Just { details } ->
-            pictogramFor details
+arrangeSession : Money -> Random.Seed -> Session
+arrangeSession startedBalance masterSeed =
+    CurrentSession
+        { account = Accounting.init startedBalance
+        , innerGame = Aparat.init masterSeed
+        }
 
 
-displayBenzinoScene : SessionState Benzino.RoundDetails -> Element.Element Msg
-displayBenzinoScene { account, history } =
-    let
-        balanceDisplay =
-            case account of
-                Account balance ->
-                    Element.text ("Account Balance: " ++ toString balance)
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg session =
+    case session of
+        CurrentSession state ->
+            state
+                |> evolveSessionState msg
+                |> Tuple.mapBoth CurrentSession runOptional
 
-        rollTrigger =
-            Element.Input.button
-                [ Element.centerX
-                , Element.Border.width 2
-                , Element.Border.rounded 2
-                , Element.padding 8
-                ]
-                { label = Element.text "Roll for 1000"
-                , onPress = Just (PlayerSubmittedBet 1000)
-                }
-    in
+        NoSession ->
+            case msg of
+                SessionInitiated time ->
+                    time
+                        |> (Random.initialSeed << Time.posixToMillis)
+                        |> arrangeSession 10000
+                        |> withNoCmd
+
+                _ ->
+                    NoSession
+                        |> withNoCmd
+
+
+displayBenzinoScene { account, innerGame } =
     Element.column
         [ Element.width (Element.px 520)
         , Element.centerX
@@ -146,20 +164,22 @@ displayBenzinoScene { account, history } =
         , Element.padding 32
         , Element.spacing 8
         ]
-        [ Element.el
-            [ Element.alignRight ]
-            balanceDisplay
-        , Element.el
-            [ Element.centerX ]
-            (rollResultsDisplay history)
-        , rollTrigger
+        [ Element.el [ Element.alignRight ]
+            (Accounting.View.balanceDisplay account)
+        , Element.el [ Element.centerX ]
+            (Aparat.View.gameScene innerGame)
+        , Element.el [ Element.centerX ]
+            (ControlPanel.View.betControl { orderBet = BetOrdered } ())
         ]
 
 
 view : Model -> Html Msg
 view model =
-    case model.session of
-        ( aggregates, _ ) ->
+    case model of
+        NoSession ->
+            Element.layout [] Element.none
+
+        CurrentSession state ->
             Element.layout [] <|
                 Element.column
                     [ Element.width Element.fill
@@ -168,6 +188,5 @@ view model =
                     , Element.spaceEvenly
                     , Element.spacing 48
                     ]
-                    [ displayBenzinoScene aggregates
-                    , plotSession aggregates
+                    [ displayBenzinoScene state
                     ]
