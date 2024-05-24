@@ -1,8 +1,7 @@
 module Accounting.AccountTests exposing (..)
 
 import Accounting.Account as Account exposing (Account(..))
-import Accounting.Accounting exposing (Request(..))
-import Expect exposing (..)
+import Expect
 import Test exposing (..)
 
 

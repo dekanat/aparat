@@ -1,13 +1,10 @@
 module Aparat.RandomDeviceTests exposing (..)
 
-import Accounting.Account exposing (Account(..), AccountingProblem(..))
 import Aparat.ChanceMechanism exposing (fairPairOfDice)
-import Expect exposing (..)
+import Expect
 import Random
-import Result exposing (..)
 import Set
 import Test exposing (..)
-import Time exposing (Weekday(..))
 
 
 compoundTest : Test

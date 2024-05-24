@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Accounting.Accounting as Accounting
 import Accounting.View
-import Aggregate as Aggregate
+import Aggregate
 import Aparat.Aparat as Aparat
 import Aparat.View
 import Browser
@@ -13,8 +13,8 @@ import Element
 import Element.Border
 import Html exposing (Html)
 import Random
-import Task exposing (..)
-import Time exposing (..)
+import Task
+import Time
 
 
 

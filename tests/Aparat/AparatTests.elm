@@ -3,15 +3,9 @@ module Aparat.AparatTests exposing (..)
 import Aparat.Aparat as Aparat exposing (Request(..))
 import Aparat.Die exposing (Face(..))
 import Aparat.PayoutLogic exposing (winMultiplierFor)
-import Common.Money exposing (Money)
 import Expect exposing (..)
-import Fuzz exposing (..)
 import Random
 import Test exposing (..)
-
-
-type OuterTypes
-    = PayoutReceived Money
 
 
 updateTests : Test
