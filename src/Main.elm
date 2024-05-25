@@ -13,6 +13,7 @@ import Element
 import Element.Border
 import Html exposing (Html)
 import Random
+import Superigra.Superigra as Superigra
 import Superigra.View
 import Task
 import Time
@@ -175,6 +176,10 @@ displayBenzinoScene { account, innerGame } =
 
 
 displaySuperGame =
+    let
+        state =
+            Superigra.dealCards 5
+    in
     Element.column
         [ Element.width (Element.px 520)
         , Element.centerX
@@ -183,7 +188,7 @@ displaySuperGame =
         , Element.padding 32
         , Element.spacing 8
         ]
-        [ Superigra.View.view
+        [ Superigra.View.view state
         ]
 
 

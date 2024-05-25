@@ -15,10 +15,10 @@ unrevealedCard =
     Element.text cardBack
 
 
-view =
+view state =
     let
         cardsOnTable =
-            Superigra.dealCards 5 |> List.map cardElement
+            state |> List.map cardElement
     in
     Element.row [ Element.spacing 15, Element.Font.size 72 ]
         cardsOnTable
