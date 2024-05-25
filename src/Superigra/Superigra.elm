@@ -65,5 +65,5 @@ type alias State =
 
 
 init : Random.Seed -> State
-init seed =
+init _ =
     Initial freshDeck
