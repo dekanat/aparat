@@ -16,14 +16,20 @@ type Round
     | UnknownState -- todo: make impossible
 
 
-update : Request -> Round -> Round
+update : Request -> Round -> ( Round, Maybe msg )
 update request round =
     case round of
-        Proposed dealer playerChoices ->
-            round
+        Proposed dealerCard playerChoices ->
+            case request of
+                SelectCard selectedCard ->
+                    let
+                        sub =
+                            Resolved dealerCard selectedCard playerChoices
+                    in
+                    ( sub, Nothing )
 
         _ ->
-            round
+            ( round, Nothing )
 
 
 type CardInTheGame

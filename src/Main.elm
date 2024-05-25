@@ -86,6 +86,12 @@ evolveSessionState msg state =
                 { get = .innerGame
                 , set = \new givenState -> { givenState | innerGame = new }
                 }
+
+        cycleOverSuperGame =
+            Aggregate.performCycleOver
+                { get = .superGame
+                , set = \new givenState -> { givenState | superGame = new }
+                }
     in
     case msg of
         BetOrdered amountToBet ->
@@ -118,6 +124,9 @@ evolveSessionState msg state =
                             }
             in
             state |> cycleOverAccounting collectPayout
+
+        SuperGameEvolved innerMessage ->
+            state |> cycleOverSuperGame (Superigra.update innerMessage)
 
         _ ->
             ( state, Nothing )

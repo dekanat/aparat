@@ -27,6 +27,11 @@ view { selectCard } state =
                     (FaceUp dealerCard :: (playerChoices |> List.map FaceDown))
                         |> List.map (cardElement { selectCard = selectCard })
 
+                Resolved dealerCard playerCard playerChoices ->
+                    (dealerCard :: playerChoices)
+                        |> List.map FaceUp
+                        |> List.map (cardElement { selectCard = selectCard })
+
                 _ ->
                     []
     in
