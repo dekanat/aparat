@@ -14,23 +14,27 @@ cardBack =
 
 
 type alias CallbackInterface msg =
-    { selectCard : Card -> msg
+    { dealHand : msg
+    , selectCard : Card -> msg
     }
 
 
 view : CallbackInterface msg -> Superigra.State -> Element msg
-view { selectCard } state =
+view { dealHand, selectCard } state =
     let
         cardsOnTable =
             case state of
+                Initial _ ->
+                    [ freshDeckElement dealHand ]
+
                 Proposed dealerCard playerChoices ->
                     (FaceUp dealerCard :: (playerChoices |> List.map FaceDown))
-                        |> List.map (cardElement { selectCard = selectCard })
+                        |> List.map (cardElement selectCard)
 
                 Resolved dealerCard playerCard playerChoices ->
                     (dealerCard :: playerChoices)
                         |> List.map FaceUp
-                        |> List.map (cardElement { selectCard = selectCard })
+                        |> List.map (cardElement selectCard)
 
                 _ ->
                     []
@@ -42,8 +46,19 @@ view { selectCard } state =
         cardsOnTable
 
 
-cardElement : CallbackInterface msg -> CardInTheGame -> Element msg
-cardElement { selectCard } cardInGame =
+freshDeckElement : msg -> Element msg
+freshDeckElement dealRound =
+    Element.Input.button
+        [ Element.centerX
+        , Element.padding 8
+        ]
+        { label = text cardBack
+        , onPress = Just dealRound
+        }
+
+
+cardElement : (Card -> msg) -> CardInTheGame -> Element msg
+cardElement selectCard cardInGame =
     let
         ( glyph, handler ) =
             case cardInGame of
