@@ -6,6 +6,10 @@ import Superigra.Card exposing (Card)
 import Superigra.Deck as Deck
 
 
+type Request
+    = SelectCard Card
+
+
 type CardInTheGame
     = FaceUp Card
     | FaceDown Card
