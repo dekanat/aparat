@@ -130,9 +130,6 @@ evolveSessionState msg state =
         SuperGameEvolved innerMessage ->
             state |> cycleOverSuperGame (Superigra.update innerMessage)
 
-        SuperGameDeal seed ->
-            state |> cycleOverSuperGame (Superigra.update (Superigra.DealCards seed))
-
         _ ->
             ( state, Nothing )
 
@@ -161,7 +158,7 @@ update msg session =
                 ConsiderSuperGame ->
                     session
                         |> withCmd
-                            (Random.generate SuperGameDeal Random.independentSeed)
+                            (Random.generate (SuperGameEvolved << Superigra.DealCards) Random.independentSeed)
 
                 _ ->
                     state

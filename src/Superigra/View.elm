@@ -1,7 +1,6 @@
 module Superigra.View exposing (..)
 
 import Element exposing (..)
-import Element.Events exposing (onClick)
 import Element.Font
 import Element.Input
 import Random exposing (..)
@@ -17,6 +16,11 @@ type alias CallbackInterface msg =
     { dealHand : msg
     , selectCard : Card -> msg
     }
+
+
+type CardInTheGame
+    = FaceUp Card
+    | FaceDown Card
 
 
 view : CallbackInterface msg -> Superigra.State -> Element msg
