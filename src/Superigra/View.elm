@@ -4,7 +4,7 @@ import Element exposing (text)
 import Element.Font
 import Random exposing (..)
 import Superigra.Card exposing (..)
-import Superigra.Deck as Deck
+import Superigra.Deck as Deck exposing (Deck, freshDeck)
 
 
 cardBack =
@@ -17,8 +17,8 @@ unrevealedCard =
 
 view =
     let
-        dealtCards =
-            Deck.deck |> List.take 5
+        ( dealtCards, _ ) =
+            Deck.shuffleAndDeal 5 freshDeck
 
         cards =
             case dealtCards of
