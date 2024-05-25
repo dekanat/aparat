@@ -120,9 +120,9 @@ cardToUnicode card =
                     11
 
                 Queen ->
-                    12
+                    13
 
                 King ->
-                    13
+                    14
     in
     String.fromChar (Char.fromCode (baseCodepoint + rankOffset))
