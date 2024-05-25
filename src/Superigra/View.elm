@@ -4,7 +4,7 @@ import Element exposing (text)
 import Element.Font
 import Random exposing (..)
 import Superigra.Card exposing (..)
-import Superigra.Deck as Deck exposing (Deck, freshDeck)
+import Superigra.Superigra as Superigra exposing (..)
 
 
 cardBack =
@@ -17,34 +17,18 @@ unrevealedCard =
 
 view =
     let
-        ( dealtCards, _ ) =
-            Deck.shuffleAndDeal 5 freshDeck
-
-        cards =
-            case dealtCards of
-                open :: closed ->
-                    { card = open, revealed = True }
-                        :: (closed |> List.map (\cc -> { card = cc, revealed = False }))
-
-                _ ->
-                    []
-
         cardsOnTable =
-            cards |> List.map cardElement
+            Superigra.dealCards 5 |> List.map cardElement
     in
     Element.row [ Element.spacing 15, Element.Font.size 72 ]
         cardsOnTable
 
 
-type alias CardInTheGame =
-    { card : Card
-    , revealed : Bool
-    }
+cardElement : CardInTheGame -> Element.Element msg
+cardElement cardInGame =
+    case cardInGame of
+        FaceUp card ->
+            card |> cardToUnicode |> text
 
-
-cardElement { card, revealed } =
-    if revealed then
-        card |> cardToUnicode |> text
-
-    else
-        cardBack |> text
+        FaceDown _ ->
+            cardBack |> text
