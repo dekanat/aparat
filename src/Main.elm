@@ -57,6 +57,7 @@ type Session
 type alias SessionState =
     { account : Accounting.State
     , innerGame : Aparat.State
+    , superGame : Superigra.State
     }
 
 
@@ -133,6 +134,7 @@ arrangeSession startedBalance masterSeed =
     CurrentSession
         { account = Accounting.init startedBalance
         , innerGame = Aparat.init masterSeed
+        , superGame = Superigra.init masterSeed
         }
 
 
@@ -175,11 +177,7 @@ displayBenzinoScene { account, innerGame } =
         ]
 
 
-displaySuperGame =
-    let
-        state =
-            Superigra.dealCards 5
-    in
+displaySuperGame { superGame } =
     Element.column
         [ Element.width (Element.px 520)
         , Element.centerX
@@ -188,7 +186,7 @@ displaySuperGame =
         , Element.padding 32
         , Element.spacing 8
         ]
-        [ Superigra.View.view state
+        [ Superigra.View.view superGame
         ]
 
 
@@ -208,5 +206,5 @@ view model =
                     , Element.spacing 48
                     ]
                     [ displayBenzinoScene state
-                    , displaySuperGame
+                    , displaySuperGame state
                     ]
