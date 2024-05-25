@@ -38,6 +38,8 @@ type Msg
     | BetOrdered Money
     | BetPlaced Money
     | PayoutReceived Money
+    | ConsiderSuperGame
+    | SuperGameDeal Random.Seed
     | SuperGameEvolved Superigra.Request
     | Noop
 
@@ -128,6 +130,9 @@ evolveSessionState msg state =
         SuperGameEvolved innerMessage ->
             state |> cycleOverSuperGame (Superigra.update innerMessage)
 
+        SuperGameDeal seed ->
+            state |> cycleOverSuperGame (Superigra.update (Superigra.DealCards seed))
+
         _ ->
             ( state, Nothing )
 
@@ -152,9 +157,16 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
     case session of
         CurrentSession state ->
-            state
-                |> evolveSessionState msg
-                |> Tuple.mapBoth CurrentSession runOptional
+            case msg of
+                ConsiderSuperGame ->
+                    session
+                        |> withCmd
+                            (Random.generate SuperGameDeal Random.independentSeed)
+
+                _ ->
+                    state
+                        |> evolveSessionState msg
+                        |> Tuple.mapBoth CurrentSession runOptional
 
         NoSession ->
             case msg of
@@ -196,7 +208,11 @@ displaySuperGame { superGame } =
         , Element.padding 32
         , Element.spacing 8
         ]
-        [ Superigra.View.view { selectCard = Superigra.SelectCard >> SuperGameEvolved } superGame
+        [ Superigra.View.view
+            { selectCard = Superigra.SelectCard >> SuperGameEvolved
+            , dealHand = ConsiderSuperGame
+            }
+            superGame
         ]
 
 

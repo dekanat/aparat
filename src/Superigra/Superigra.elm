@@ -3,30 +3,43 @@ module Superigra.Superigra exposing (..)
 import Random
 import Random.List
 import Superigra.Card exposing (Card)
-import Superigra.Deck as Deck
+import Superigra.Deck as Deck exposing (Deck, freshDeck)
 
 
 type Request
-    = SelectCard Card
+    = DealCards Random.Seed
+    | SelectCard Card
 
 
 type Round
-    = Proposed Card (List Card)
+    = Initial Deck
+    | Proposed Card (List Card)
     | Resolved Card Card (List Card)
     | UnknownState -- todo: make impossible
 
 
 update : Request -> Round -> ( Round, Maybe msg )
 update request round =
-    case round of
-        Proposed dealerCard playerChoices ->
-            case request of
-                SelectCard selectedCard ->
-                    let
-                        sub =
-                            Resolved dealerCard selectedCard playerChoices
-                    in
-                    ( sub, Nothing )
+    case ( round, request ) of
+        ( Initial _, DealCards seed ) ->
+            let
+                dealFromShuffled =
+                    Deck.freshDeck
+                        |> Random.List.choices 5
+                        |> Random.map (Tuple.first >> dealHand)
+
+                ( hand, _ ) =
+                    seed
+                        |> Random.step dealFromShuffled
+            in
+            ( hand, Nothing )
+
+        ( Proposed dealerCard playerChoices, SelectCard selectedCard ) ->
+            let
+                sub =
+                    Resolved dealerCard selectedCard playerChoices
+            in
+            ( sub, Nothing )
 
         _ ->
             ( round, Nothing )
@@ -53,14 +66,4 @@ type alias State =
 
 init : Random.Seed -> State
 init seed =
-    let
-        dealFromShuffled =
-            Deck.freshDeck
-                |> Random.List.choices 5
-                |> Random.map (Tuple.first >> dealHand)
-
-        ( cards, _ ) =
-            seed
-                |> Random.step dealFromShuffled
-    in
-    cards
+    Initial freshDeck
