@@ -38,6 +38,7 @@ type Msg
     | BetOrdered Money
     | BetPlaced Money
     | PayoutReceived Money
+    | SuperGameEvolved Superigra.Request
     | Noop
 
 
@@ -186,7 +187,7 @@ displaySuperGame { superGame } =
         , Element.padding 32
         , Element.spacing 8
         ]
-        [ Superigra.View.view superGame
+        [ Superigra.View.view { selectCard = Superigra.SelectCard >> SuperGameEvolved } superGame
         ]
 
 

@@ -1,7 +1,9 @@
 module Superigra.View exposing (..)
 
-import Element exposing (text)
+import Element exposing (..)
+import Element.Events exposing (onClick)
 import Element.Font
+import Element.Input
 import Random exposing (..)
 import Superigra.Card exposing (..)
 import Superigra.Superigra as Superigra exposing (..)
@@ -11,24 +13,43 @@ cardBack =
     "🂠"
 
 
-unrevealedCard =
-    Element.text cardBack
+type alias CallbackInterface msg =
+    { selectCard : Card -> msg
+    }
 
 
-view state =
+view : CallbackInterface msg -> Superigra.State -> Element msg
+view { selectCard } state =
     let
         cardsOnTable =
-            state |> List.map cardElement
+            state |> List.map (cardElement { selectCard = selectCard })
     in
-    Element.row [ Element.spacing 15, Element.Font.size 72 ]
+    Element.row
+        [ Element.spacing 8
+        , Element.Font.size 64
+        ]
         cardsOnTable
 
 
-cardElement : CardInTheGame -> Element.Element msg
-cardElement cardInGame =
-    case cardInGame of
-        FaceUp card ->
-            card |> cardToUnicode |> text
+cardElement : CallbackInterface msg -> CardInTheGame -> Element msg
+cardElement { selectCard } cardInGame =
+    let
+        ( glyph, handler ) =
+            case cardInGame of
+                FaceUp card ->
+                    ( card |> cardToUnicode
+                    , Nothing
+                    )
 
-        FaceDown _ ->
-            cardBack |> text
+                FaceDown card ->
+                    ( cardBack
+                    , Just (selectCard card)
+                    )
+    in
+    Element.Input.button
+        [ Element.centerX
+        , Element.padding 8
+        ]
+        { label = text glyph
+        , onPress = handler
+        }
