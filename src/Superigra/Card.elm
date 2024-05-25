@@ -19,6 +19,24 @@ type Rank
     | Ace
 
 
+ranks : List Rank
+ranks =
+    [ Two
+    , Three
+    , Four
+    , Five
+    , Six
+    , Seven
+    , Eight
+    , Nine
+    , Ten
+    , Jack
+    , Queen
+    , King
+    , Ace
+    ]
+
+
 
 -- Define the suit of a card
 
@@ -28,6 +46,15 @@ type Suit
     | Diamonds
     | Clubs
     | Spades
+
+
+suits : List Suit
+suits =
+    [ Hearts
+    , Diamonds
+    , Clubs
+    , Spades
+    ]
 
 
 
