@@ -1,5 +1,7 @@
 module Superigra.Superigra exposing (..)
 
+import Random
+import Random.List
 import Superigra.Card exposing (Card)
 import Superigra.Deck as Deck
 
@@ -9,17 +11,30 @@ type CardInTheGame
     | FaceDown Card
 
 
-dealCards size =
+dealHand : List Card -> List CardInTheGame
+dealHand cardsSelected =
+    case cardsSelected of
+        dealer :: player ->
+            FaceUp dealer :: (player |> List.map FaceDown)
+
+        _ ->
+            []
+
+
+type alias State =
+    List CardInTheGame
+
+
+init : Random.Seed -> State
+init seed =
     let
-        ( cardsSelected, _ ) =
-            Deck.shuffleAndDeal size Deck.freshDeck
+        dealFiveFromShuffled =
+            Deck.freshDeck
+                |> Random.List.choices 5
+                |> Random.map (Tuple.first >> dealHand)
 
-        handsDealt =
-            case cardsSelected of
-                dealer :: player ->
-                    FaceUp dealer :: (player |> List.map FaceDown)
-
-                _ ->
-                    []
+        ( cards, _ ) =
+            seed
+                |> Random.step dealFiveFromShuffled
     in
-    handsDealt
+    cards
