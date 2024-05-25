@@ -22,7 +22,13 @@ view : CallbackInterface msg -> Superigra.State -> Element msg
 view { selectCard } state =
     let
         cardsOnTable =
-            state |> List.map (cardElement { selectCard = selectCard })
+            case state of
+                Proposed dealerCard playerChoices ->
+                    (FaceUp dealerCard :: (playerChoices |> List.map FaceDown))
+                        |> List.map (cardElement { selectCard = selectCard })
+
+                _ ->
+                    []
     in
     Element.row
         [ Element.spacing 8
