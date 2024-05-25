@@ -13,6 +13,7 @@ import Element
 import Element.Border
 import Html exposing (Html)
 import Random
+import Superigra.View
 import Task
 import Time
 
@@ -173,6 +174,19 @@ displayBenzinoScene { account, innerGame } =
         ]
 
 
+displaySuperGame =
+    Element.column
+        [ Element.width (Element.px 520)
+        , Element.centerX
+        , Element.Border.width 2
+        , Element.Border.rounded 2
+        , Element.padding 32
+        , Element.spacing 8
+        ]
+        [ Superigra.View.view
+        ]
+
+
 view : Model -> Html Msg
 view model =
     case model of
@@ -181,7 +195,7 @@ view model =
 
         CurrentSession state ->
             Element.layout [] <|
-                Element.column
+                Element.row
                     [ Element.width Element.fill
                     , Element.centerX
                     , Element.centerY
@@ -189,4 +203,5 @@ view model =
                     , Element.spacing 48
                     ]
                     [ displayBenzinoScene state
+                    , displaySuperGame
                     ]
