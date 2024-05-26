@@ -10,21 +10,21 @@ import Superigra.Superigra as Superigra exposing (..)
 
 
 type alias CallbackInterface msg =
-    { dealHand : msg
-    , selectCard : Card -> msg
+    { toSelf : Request -> msg
+    , toSelfSeeded : (Random.Seed -> Superigra.Request) -> msg
     }
 
 
 view : CallbackInterface msg -> Superigra.State -> Element msg
-view { dealHand, selectCard } state =
+view { toSelfSeeded, toSelf } state =
     let
         cardsOnTable =
             case state of
                 Initial _ ->
-                    [ freshDeckElement dealHand ]
+                    [ freshDeckElement toSelfSeeded ]
 
                 Proposed dealerCard playerChoices ->
-                    viewDealt selectCard dealerCard playerChoices
+                    viewDealt toSelf dealerCard playerChoices
 
                 Resolved dealerCard playerCard playerChoices ->
                     viewResolved dealerCard playerCard playerChoices
@@ -49,15 +49,15 @@ neutralCard =
     cardSymbol >> cardControl Nothing
 
 
-viewDealt : (Card -> msg) -> Card -> List Card -> List (Element msg)
-viewDealt select dealer playerChoices =
+viewDealt : (Request -> msg) -> Card -> List Card -> List (Element msg)
+viewDealt trigger dealer playerChoices =
     let
         dealerCard =
             dealer |> neutralCard
 
         concealedChoices =
             playerChoices
-                |> List.map (\card -> cardControl (Just (select card)) cardBackSymbol)
+                |> List.map (\card -> cardControl (Just (trigger (SelectCard card))) cardBackSymbol)
     in
     dealerCard :: concealedChoices
 
@@ -68,6 +68,6 @@ viewResolved dealer player presentedChoices =
         |> List.map neutralCard
 
 
-freshDeckElement : msg -> Element msg
-freshDeckElement dealRound =
-    cardControl (Just dealRound) cardBackSymbol
+freshDeckElement : ((Random.Seed -> Request) -> msg) -> Element msg
+freshDeckElement randomize =
+    cardControl (Just (randomize DealCards)) cardBackSymbol
