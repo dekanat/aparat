@@ -38,8 +38,7 @@ type Msg
     | BetOrdered Money
     | BetPlaced Money
     | PayoutReceived Money
-    | ConsiderSuperGame
-    | SuperGameDeal Random.Seed
+    | Randomize (Random.Seed -> Msg)
     | SuperGameEvolved Superigra.Request
     | Noop
 
@@ -155,10 +154,10 @@ update msg session =
     case session of
         CurrentSession state ->
             case msg of
-                ConsiderSuperGame ->
+                Randomize call ->
                     session
                         |> withCmd
-                            (Random.generate (SuperGameEvolved << Superigra.DealCards) Random.independentSeed)
+                            (Random.generate call Random.independentSeed)
 
                 _ ->
                     state
@@ -206,8 +205,8 @@ displaySuperGame { superGame } =
         , Element.spacing 8
         ]
         [ Superigra.View.view
-            { selectCard = Superigra.SelectCard >> SuperGameEvolved
-            , dealHand = ConsiderSuperGame
+            { toSelf = SuperGameEvolved
+            , toSelfSeeded = \innerCall -> Randomize (SuperGameEvolved << innerCall)
             }
             superGame
         ]
