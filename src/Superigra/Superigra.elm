@@ -3,7 +3,7 @@ module Superigra.Superigra exposing (..)
 import Random
 import Random.List
 import Superigra.Card as Card exposing (Card)
-import Superigra.Deck as Deck exposing (Deck, freshDeck)
+import Superigra.Deck as Deck exposing (Deck, regularCards)
 
 
 type Request
@@ -24,7 +24,7 @@ update request round =
         ( Initial _, DealCards seed ) ->
             let
                 dealFromShuffled =
-                    Deck.freshDeck
+                    Deck.regularCards
                         |> Random.List.choices 5
                         |> Random.map (Tuple.first >> dealHand)
 
@@ -75,4 +75,4 @@ type alias State =
 
 init : Random.Seed -> State
 init seed =
-    Initial freshDeck
+    Initial regularCards
