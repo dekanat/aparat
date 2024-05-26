@@ -18,11 +18,6 @@ type alias CallbackInterface msg =
     }
 
 
-type CardInTheGame
-    = FaceUp Card
-    | FaceDown Card
-
-
 view : CallbackInterface msg -> Superigra.State -> Element msg
 view { dealHand, selectCard } state =
     let
@@ -32,54 +27,53 @@ view { dealHand, selectCard } state =
                     [ freshDeckElement dealHand ]
 
                 Proposed dealerCard playerChoices ->
-                    (FaceUp dealerCard :: (playerChoices |> List.map FaceDown))
-                        |> List.map (cardElement selectCard)
+                    viewDealt selectCard dealerCard playerChoices
 
                 Resolved dealerCard playerCard playerChoices ->
-                    (dealerCard :: playerChoices)
-                        |> List.map FaceUp
-                        |> List.map (cardElement selectCard)
+                    viewResolved dealerCard playerCard playerChoices
 
                 _ ->
                     []
     in
     Element.row
-        [ Element.spacing 8
-        , Element.Font.size 64
-        ]
+        []
         cardsOnTable
 
 
-freshDeckElement : msg -> Element msg
-freshDeckElement dealRound =
+cardControl handler glyph =
     Element.Input.button
         [ Element.centerX
         , Element.padding 8
-        ]
-        { label = text cardBack
-        , onPress = Just dealRound
-        }
-
-
-cardElement : (Card -> msg) -> CardInTheGame -> Element msg
-cardElement selectCard cardInGame =
-    let
-        ( glyph, handler ) =
-            case cardInGame of
-                FaceUp card ->
-                    ( card |> cardToUnicode
-                    , Nothing
-                    )
-
-                FaceDown card ->
-                    ( cardBack
-                    , Just (selectCard card)
-                    )
-    in
-    Element.Input.button
-        [ Element.centerX
-        , Element.padding 8
+        , Element.Font.size 64
         ]
         { label = text glyph
         , onPress = handler
         }
+
+
+neutralCard =
+    cardToUnicode >> cardControl Nothing
+
+
+viewDealt : (Card -> msg) -> Card -> List Card -> List (Element msg)
+viewDealt select dealer playerChoices =
+    let
+        dealerCard =
+            dealer |> neutralCard
+
+        concealedChoices =
+            playerChoices
+                |> List.map (\card -> cardControl (Just (select card)) cardBack)
+    in
+    dealerCard :: concealedChoices
+
+
+viewResolved : Card -> Card -> List Card -> List (Element msg)
+viewResolved dealer player presentedChoices =
+    (dealer :: presentedChoices)
+        |> List.map neutralCard
+
+
+freshDeckElement : msg -> Element msg
+freshDeckElement dealRound =
+    cardControl (Just dealRound) cardBack
