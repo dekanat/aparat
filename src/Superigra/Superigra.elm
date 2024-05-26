@@ -2,7 +2,7 @@ module Superigra.Superigra exposing (..)
 
 import Random
 import Random.List
-import Superigra.Card exposing (Card)
+import Superigra.Card as Card exposing (Card)
 import Superigra.Deck as Deck exposing (Deck, freshDeck)
 
 
@@ -43,6 +43,20 @@ update request round =
 
         _ ->
             ( round, Nothing )
+
+
+dealShuffled : Int -> Card -> List Card -> Random.Generator ( Card, List Card )
+dealShuffled count first rest =
+    let
+        withChoicesWithoutReplacement : Card -> Random.Generator ( Card, List Card )
+        withChoicesWithoutReplacement dealerCard =
+            rest
+                |> List.filter ((/=) dealerCard)
+                |> Random.List.choices count
+                |> Random.map (\( playerChoices, _ ) -> ( dealerCard, playerChoices ))
+    in
+    Random.uniform first rest
+        |> Random.andThen withChoicesWithoutReplacement
 
 
 dealHand : List Card -> Round
