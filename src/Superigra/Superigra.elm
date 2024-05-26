@@ -28,11 +28,11 @@ update request round =
                         |> Random.List.choices 5
                         |> Random.map (Tuple.first >> dealHand)
 
-                ( hand, _ ) =
+                ( cards, _ ) =
                     seed
                         |> Random.step dealFromShuffled
             in
-            ( hand, Nothing )
+            ( cards, Nothing )
 
         ( Proposed dealerCard playerChoices, SelectCard selectedCard ) ->
             let
@@ -43,11 +43,6 @@ update request round =
 
         _ ->
             ( round, Nothing )
-
-
-type CardInTheGame
-    = FaceUp Card
-    | FaceDown Card
 
 
 dealHand : List Card -> Round
@@ -65,5 +60,5 @@ type alias State =
 
 
 init : Random.Seed -> State
-init _ =
+init seed =
     Initial freshDeck
