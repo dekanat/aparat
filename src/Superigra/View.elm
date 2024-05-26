@@ -5,11 +5,8 @@ import Element.Font
 import Element.Input
 import Random exposing (..)
 import Superigra.Card exposing (..)
+import Superigra.CardGlyph exposing (cardBackSymbol, cardSymbol)
 import Superigra.Superigra as Superigra exposing (..)
-
-
-cardBack =
-    "🂠"
 
 
 type alias CallbackInterface msg =
@@ -52,7 +49,7 @@ cardControl handler glyph =
 
 
 neutralCard =
-    cardToUnicode >> cardControl Nothing
+    cardSymbol >> cardControl Nothing
 
 
 viewDealt : (Card -> msg) -> Card -> List Card -> List (Element msg)
@@ -63,7 +60,7 @@ viewDealt select dealer playerChoices =
 
         concealedChoices =
             playerChoices
-                |> List.map (\card -> cardControl (Just (select card)) cardBack)
+                |> List.map (\card -> cardControl (Just (select card)) cardBackSymbol)
     in
     dealerCard :: concealedChoices
 
@@ -76,4 +73,4 @@ viewResolved dealer player presentedChoices =
 
 freshDeckElement : msg -> Element msg
 freshDeckElement dealRound =
-    cardControl (Just dealRound) cardBack
+    cardControl (Just dealRound) cardBackSymbol

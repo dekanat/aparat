@@ -1,41 +1,35 @@
 module Superigra.Deck exposing (..)
 
-import Expect
 import List.Extra
 import Random
-import Random.List exposing (choices)
-import Superigra.Card as Card exposing (Card(..))
-import Test exposing (Test, describe, test)
+import Random.List
+import Superigra.Card exposing (Card(..), regularCards)
 
 
 type alias Deck =
     List Card
 
 
-regularCards : List Card
-regularCards =
-    Card.suits
-        |> List.Extra.andThen
-            (\suit ->
-                Card.ranks
-                    |> List.Extra.andThen (\rank -> [ RegularCard suit rank ])
-            )
+randomChoices : Int -> List a -> Random.Generator (List a)
+randomChoices count list =
+    list
+        |> Random.List.choices count
+        |> Random.map Tuple.first
 
 
-regularCardsTests : Test
-regularCardsTests =
-    describe "Deck"
-        [ test """ Should be standard 52-card deck
-
-            🂢 🂣 🂤 🂥 🂦 🂧 🂨 🂩 🂪 🂫 🂭 🂮 🂡
-            🂲 🂳 🂴 🂵 🂶 🂷 🂸 🂹 🂺 🂻 🂽 🂾 🂱
-            🃂 🃃 🃄 🃅 🃆 🃇 🃈 🃉 🃊 🃋 🃍 🃎 🃁
-            🃒 🃓 🃔 🃕 🃖 🃗 🃘 🃙 🃚 🃛 🃝 🃞 🃑
-        """ <|
-            \() ->
-                regularCards
-                    |> Expect.all
-                        [ List.length >> Expect.equal 52
-                        , List.Extra.unique >> List.length >> Expect.equal 52
-                        ]
-        ]
+dealHandFromTop : Int -> Random.Generator ( Card, List Card )
+dealHandFromTop count =
+    let
+        choicesToBeatGiven : Card -> Random.Generator ( Card, List Card )
+        choicesToBeatGiven dealerCard =
+            let
+                deckWithoutReplacement =
+                    (Joker :: regularCards)
+                        |> List.Extra.remove dealerCard
+            in
+            deckWithoutReplacement
+                |> randomChoices count
+                |> Random.map (Tuple.pair dealerCard)
+    in
+    Random.uniform Joker regularCards
+        |> Random.andThen choicesToBeatGiven
