@@ -1,5 +1,9 @@
 module Superigra.Card exposing (..)
 
+import Html exposing (code)
+
+
+
 -- Define the rank of a card
 
 
@@ -61,17 +65,16 @@ suits =
 -- Define a card with a rank and a suit
 
 
-type alias Card =
-    { rank : Rank
-    , suit : Suit
-    }
+type Card
+    = RegularCard Suit Rank
+    | Joker
 
 
-cardToUnicode : Card -> String
-cardToUnicode card =
+regularCardCode : Suit -> Rank -> Int
+regularCardCode suit rank =
     let
         baseCodepoint =
-            case card.suit of
+            case suit of
                 Spades ->
                     0x0001F0A0
 
@@ -85,7 +88,7 @@ cardToUnicode card =
                     0x0001F0D0
 
         rankOffset =
-            case card.rank of
+            case rank of
                 Ace ->
                     1
 
@@ -125,4 +128,22 @@ cardToUnicode card =
                 King ->
                     14
     in
-    String.fromChar (Char.fromCode (baseCodepoint + rankOffset))
+    baseCodepoint + rankOffset
+
+
+jokerCardCode =
+    0x0001F0CF
+
+
+cardToUnicode : Card -> String
+cardToUnicode card =
+    let
+        codePoint =
+            case card of
+                RegularCard suit rank ->
+                    regularCardCode suit rank
+
+                Joker ->
+                    jokerCardCode
+    in
+    String.fromChar (Char.fromCode codePoint)

@@ -4,4 +4,4 @@ import Superigra.Deck as Deck
 
 
 deckTests =
-    Deck.freshDeckTests
+    Deck.regularCardsTests
