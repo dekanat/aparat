@@ -14,7 +14,6 @@ type State
     = Initial (List Card)
     | Proposed Card (List Card)
     | Resolved Card Card (List Card)
-    | UnknownState -- todo: make impossible
 
 
 update : Request -> State -> ( State, Maybe msg )

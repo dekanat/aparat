@@ -28,9 +28,6 @@ view { dealHand, selectCard } state =
 
                 Resolved dealerCard playerCard playerChoices ->
                     viewResolved dealerCard playerCard playerChoices
-
-                _ ->
-                    []
     in
     Element.row
         []
