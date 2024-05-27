@@ -127,7 +127,14 @@ evolveSessionState msg state =
             state |> cycleOverAccounting collectPayout
 
         SuperGameEvolved innerMessage ->
-            state |> cycleOverSuperGame (Dublich.update innerMessage)
+            state
+                |> cycleOverSuperGame
+                    (innerMessage
+                        |> Dublich.updateWith
+                            { seed = \inner -> Randomize (SuperGameEvolved << inner)
+                            , conclude = \_ -> Noop
+                            }
+                    )
 
         _ ->
             ( state, Nothing )
@@ -206,7 +213,6 @@ displaySuperGame { superGame } =
         ]
         [ Dublich.View.view
             { toSelf = SuperGameEvolved
-            , toSelfSeeded = \innerCall -> Randomize (SuperGameEvolved << innerCall)
             }
             superGame
         ]

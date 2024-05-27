@@ -1,5 +1,6 @@
 module Dublich.View exposing (..)
 
+import Debug exposing (toString)
 import Dublich.Card exposing (..)
 import Dublich.CardGlyph exposing (cardBackSymbol, cardSymbol)
 import Dublich.Dublich as Dublich exposing (..)
@@ -11,22 +12,23 @@ import Random exposing (..)
 
 type alias CallbackInterface msg =
     { toSelf : Request -> msg
-    , toSelfSeeded : (Random.Seed -> Dublich.Request) -> msg
     }
 
 
 view : CallbackInterface msg -> Dublich.State -> Element msg
-view { toSelfSeeded, toSelf } state =
+view { toSelf } state =
     let
         cardsOnTable =
             case state of
-                Initial _ ->
-                    [ freshDeckElement toSelfSeeded ]
+                Initial wager ->
+                    [ freshDeckElement toSelf
+                    , text ("Wager: " ++ toString wager)
+                    ]
 
-                Proposed dealerCard playerChoices ->
+                Proposed stake ( dealerCard, playerChoices ) ->
                     viewDealt toSelf dealerCard playerChoices
 
-                Resolved dealerCard playerCard playerChoices ->
+                Resolved outcome ( dealerCard, playerChoices ) playerCard ->
                     viewResolved dealerCard playerCard playerChoices
     in
     Element.row
@@ -73,6 +75,6 @@ viewResolved dealer _ presentedChoices =
         |> List.map neutralCard
 
 
-freshDeckElement : ((Random.Seed -> Request) -> msg) -> Element msg
-freshDeckElement randomize =
-    cardControl (Just (randomize DealCards)) cardBackSymbol
+freshDeckElement : (Request -> msg) -> Element msg
+freshDeckElement toSelf =
+    cardControl (Just (toSelf Start)) cardBackSymbol
