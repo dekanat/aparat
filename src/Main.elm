@@ -11,7 +11,7 @@ import Common.Money exposing (Money)
 import ControlPanel.View
 import Element
 import Element.Border
-import Html exposing (Html)
+import Html exposing (Html, time)
 import Random
 import Task
 import Time
@@ -21,7 +21,12 @@ import Time
 -- MAIN
 
 
-main : Program () Model Msg
+type alias Flags =
+    { currentTime : Int
+    }
+
+
+main : Program Flags Model Msg
 main =
     Browser.element
         { init = init
@@ -32,8 +37,7 @@ main =
 
 
 type Msg
-    = SessionInitiated Time.Posix
-    | BetOrdered Money
+    = BetOrdered Money
     | BetPlaced Money
     | PayoutReceived Money
     | Noop
@@ -44,12 +48,7 @@ type Msg
 
 
 type alias Model =
-    Session
-
-
-type Session
-    = NoSession
-    | CurrentSession SessionState
+    SessionState
 
 
 type alias SessionState =
@@ -119,40 +118,26 @@ evolveSessionState msg state =
             ( state, Nothing )
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( NoSession
-    , Task.perform SessionInitiated Time.now
-    )
+init : Flags -> ( Model, Cmd Msg )
+init { currentTime } =
+    currentTime
+        |> Random.initialSeed
+        |> arrangeSession 10000
+        |> withNoCmd
 
 
-arrangeSession : Money -> Random.Seed -> Session
+arrangeSession : Money -> Random.Seed -> SessionState
 arrangeSession startedBalance masterSeed =
-    CurrentSession
-        { account = Accounting.init startedBalance
-        , innerGame = Aparat.init masterSeed
-        }
+    { account = Accounting.init startedBalance
+    , innerGame = Aparat.init masterSeed
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg session =
-    case session of
-        CurrentSession state ->
-            state
-                |> evolveSessionState msg
-                |> Tuple.mapBoth CurrentSession runOptional
-
-        NoSession ->
-            case msg of
-                SessionInitiated time ->
-                    time
-                        |> (Random.initialSeed << Time.posixToMillis)
-                        |> arrangeSession 10000
-                        |> withNoCmd
-
-                _ ->
-                    NoSession
-                        |> withNoCmd
+    session
+        |> evolveSessionState msg
+        |> Tuple.mapBoth identity runOptional
 
 
 displayBenzinoScene { account, innerGame } =
@@ -174,19 +159,22 @@ displayBenzinoScene { account, innerGame } =
 
 
 view : Model -> Html Msg
-view model =
-    case model of
-        NoSession ->
-            Element.layout [] Element.none
-
-        CurrentSession state ->
-            Element.layout [] <|
-                Element.column
-                    [ Element.width Element.fill
-                    , Element.centerX
-                    , Element.centerY
-                    , Element.spaceEvenly
-                    , Element.spacing 48
-                    ]
-                    [ displayBenzinoScene state
-                    ]
+view state =
+    Element.layout [] <|
+        Element.column
+            [ Element.centerX
+            , Element.centerY
+            ]
+            [ Element.el
+                [ Element.centerX
+                , Element.padding 48
+                ]
+                (Accounting.View.balanceDisplay state.account)
+            , Element.row
+                [ Element.width Element.fill
+                , Element.spaceEvenly
+                , Element.spacing 48
+                ]
+                [ displayBenzinoScene state
+                ]
+            ]
