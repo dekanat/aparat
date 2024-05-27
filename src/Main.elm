@@ -132,7 +132,10 @@ evolveSessionState msg state =
                     (innerMessage
                         |> Dublich.updateWith
                             { seed = \inner -> Randomize (SuperGameEvolved << inner)
-                            , conclude = \_ -> Noop
+                            , conclude =
+                                \payout ->
+                                    Maybe.map PayoutReceived payout
+                                        |> Maybe.withDefault Noop
                             }
                     )
 

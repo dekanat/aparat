@@ -1,7 +1,7 @@
 module Dublich.Dublich exposing (..)
 
 import Common.Money exposing (Money)
-import Dublich.Card exposing (Card(..))
+import Dublich.Card as Card exposing (Card(..))
 import Dublich.Deck as Deck
 import Random
 
@@ -51,8 +51,19 @@ updateWith { seed, conclude } request state =
             let
                 sub =
                     Resolved (Just stake) box selectedCard
+
+                outcome =
+                    case Card.compare selectedCard (Tuple.first box) of
+                        LT ->
+                            conclude Nothing
+
+                        EQ ->
+                            conclude (Just (stake + 0))
+
+                        GT ->
+                            conclude (Just (stake + stake))
             in
-            ( sub, Nothing )
+            ( sub, Just outcome )
 
         _ ->
             ( state, Nothing )
