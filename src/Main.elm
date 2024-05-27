@@ -232,7 +232,11 @@ view model =
                     [ Element.centerX
                     , Element.centerY
                     ]
-                    [ Element.el [ Element.alignRight ] (Accounting.View.balanceDisplay state.account)
+                    [ Element.el
+                        [ Element.centerX
+                        , Element.padding 48
+                        ]
+                        (Accounting.View.balanceDisplay state.account)
                     , Element.row
                         [ Element.width Element.fill
                         , Element.spaceEvenly
