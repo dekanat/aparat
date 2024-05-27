@@ -69,28 +69,6 @@ updateWith { seed, conclude } request state =
             ( state, Nothing )
 
 
-
--- update : Request -> State -> ( State, Maybe msg )
--- update request round =
---     case ( round, request ) of
---         ( Initial stake, DealCards seed ) ->
---             let
---                 ( dealerCard, playerChoices ) =
---                     seed
---                         |> Random.step (Deck.dealHandFromTop 4)
---                         |> Tuple.first
---             in
---             ( Proposed stake ( dealerCard, playerChoices ), Nothing )
---         ( Proposed stake box, SelectCard selectedCard ) ->
---             let
---                 sub =
---                     Resolved (Just stake) box selectedCard
---             in
---             ( sub, Nothing )
---         _ ->
---             ( round, Nothing )
-
-
-init : Random.Seed -> State
-init _ =
-    Initial 1000
+init : Money -> State
+init stake =
+    Initial stake
