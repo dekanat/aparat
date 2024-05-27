@@ -1,6 +1,6 @@
-module Super.CardTests exposing (..)
+module Dublich.CardTests exposing (..)
 
-import Superigra.Card exposing (expectationsFromRegularCards)
+import Dublich.Card exposing (expectationsFromRegularCards)
 import Test exposing (Test, describe, test)
 
 
@@ -9,7 +9,7 @@ regularCardsTests =
     describe "Deck"
         [ expectationsFromRegularCards
             |> always
-            |> test """ 
+            |> test """
                 regular 52 cards
 
                 🂢 🂣 🂤 🂥 🂦 🂧 🂨 🂩 🂪 🂫 🂭 🂮 🂡

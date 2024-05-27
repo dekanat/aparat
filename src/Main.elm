@@ -9,12 +9,12 @@ import Browser
 import Cmd.Extra exposing (..)
 import Common.Money exposing (Money)
 import ControlPanel.View
+import Dublich.Dublich as Dublich
+import Dublich.View
 import Element
 import Element.Border
 import Html exposing (Html)
 import Random
-import Superigra.Superigra as Superigra
-import Superigra.View
 import Task
 import Time
 
@@ -39,7 +39,7 @@ type Msg
     | BetPlaced Money
     | PayoutReceived Money
     | Randomize (Random.Seed -> Msg)
-    | SuperGameEvolved Superigra.Request
+    | SuperGameEvolved Dublich.Request
     | Noop
 
 
@@ -59,7 +59,7 @@ type Session
 type alias SessionState =
     { account : Accounting.State
     , innerGame : Aparat.State
-    , superGame : Superigra.State
+    , superGame : Dublich.State
     }
 
 
@@ -127,7 +127,7 @@ evolveSessionState msg state =
             state |> cycleOverAccounting collectPayout
 
         SuperGameEvolved innerMessage ->
-            state |> cycleOverSuperGame (Superigra.update innerMessage)
+            state |> cycleOverSuperGame (Dublich.update innerMessage)
 
         _ ->
             ( state, Nothing )
@@ -145,7 +145,7 @@ arrangeSession startedBalance masterSeed =
     CurrentSession
         { account = Accounting.init startedBalance
         , innerGame = Aparat.init masterSeed
-        , superGame = Superigra.init masterSeed
+        , superGame = Dublich.init masterSeed
         }
 
 
@@ -204,7 +204,7 @@ displaySuperGame { superGame } =
         , Element.padding 32
         , Element.spacing 8
         ]
-        [ Superigra.View.view
+        [ Dublich.View.view
             { toSelf = SuperGameEvolved
             , toSelfSeeded = \innerCall -> Randomize (SuperGameEvolved << innerCall)
             }

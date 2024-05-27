@@ -1,6 +1,6 @@
-module Superigra.CardGlyph exposing (..)
+module Dublich.CardGlyph exposing (..)
 
-import Superigra.Card exposing (Card(..), Rank(..), Suit(..))
+import Dublich.Card exposing (Card(..), Rank(..), Suit(..))
 
 
 cardSymbol : Card -> String

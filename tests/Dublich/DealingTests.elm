@@ -1,9 +1,9 @@
-module Super.DealingTests exposing (..)
+module Dublich.DealingTests exposing (..)
 
+import Dublich.Deck exposing (dealHandFromTop)
 import Expect
 import List.Extra
 import Random
-import Superigra.Deck exposing (dealHandFromTop)
 import Test exposing (Test, describe, test)
 
 

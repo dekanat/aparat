@@ -1,4 +1,4 @@
-module Superigra.Card exposing (..)
+module Dublich.Card exposing (..)
 
 import Expect exposing (Expectation)
 import List.Extra
