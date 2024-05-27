@@ -1,21 +1,21 @@
-module Superigra.View exposing (..)
+module Dublich.View exposing (..)
 
+import Dublich.Card exposing (..)
+import Dublich.CardGlyph exposing (cardBackSymbol, cardSymbol)
+import Dublich.Dublich as Dublich exposing (..)
 import Element exposing (..)
 import Element.Font
 import Element.Input
 import Random exposing (..)
-import Superigra.Card exposing (..)
-import Superigra.CardGlyph exposing (cardBackSymbol, cardSymbol)
-import Superigra.Superigra as Superigra exposing (..)
 
 
 type alias CallbackInterface msg =
     { toSelf : Request -> msg
-    , toSelfSeeded : (Random.Seed -> Superigra.Request) -> msg
+    , toSelfSeeded : (Random.Seed -> Dublich.Request) -> msg
     }
 
 
-view : CallbackInterface msg -> Superigra.State -> Element msg
+view : CallbackInterface msg -> Dublich.State -> Element msg
 view { toSelfSeeded, toSelf } state =
     let
         cardsOnTable =
@@ -57,13 +57,18 @@ viewDealt trigger dealer playerChoices =
 
         concealedChoices =
             playerChoices
-                |> List.map (\card -> cardControl (Just (trigger (SelectCard card))) cardBackSymbol)
+                |> List.map
+                    (\card ->
+                        cardControl
+                            (Just (trigger (SelectCard card)))
+                            cardBackSymbol
+                    )
     in
     dealerCard :: concealedChoices
 
 
 viewResolved : Card -> Card -> List Card -> List (Element msg)
-viewResolved dealer player presentedChoices =
+viewResolved dealer _ presentedChoices =
     (dealer :: presentedChoices)
         |> List.map neutralCard
 

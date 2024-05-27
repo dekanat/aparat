@@ -1,9 +1,9 @@
-module Superigra.Deck exposing (..)
+module Dublich.Deck exposing (..)
 
+import Dublich.Card exposing (Card(..), regularCards)
 import List.Extra
 import Random
 import Random.List
-import Superigra.Card exposing (Card(..), regularCards)
 
 
 type alias Deck =

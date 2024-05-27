@@ -1,8 +1,8 @@
-module Superigra.Superigra exposing (..)
+module Dublich.Dublich exposing (..)
 
+import Dublich.Card exposing (Card(..), regularCards)
+import Dublich.Deck as Deck
 import Random
-import Superigra.Card exposing (Card(..), regularCards)
-import Superigra.Deck as Deck
 
 
 type Request
