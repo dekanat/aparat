@@ -37,6 +37,7 @@ type Msg
     = SessionInitiated Time.Posix
     | BetOrdered Money
     | BetPlaced Money
+    | RoundCompleted Money
     | PayoutReceived Money
     | Randomize (Random.Seed -> Msg)
     | SuperGameEvolved Dublich.Request
@@ -155,7 +156,7 @@ arrangeSession startedBalance masterSeed =
     CurrentSession
         { account = Accounting.init startedBalance
         , innerGame = Aparat.init masterSeed
-        , superGame = Dublich.init masterSeed
+        , superGame = Dublich.init 1000
         }
 
 
@@ -196,9 +197,7 @@ displayBenzinoScene { account, innerGame } =
         , Element.padding 32
         , Element.spacing 8
         ]
-        [ Element.el [ Element.alignRight ]
-            (Accounting.View.balanceDisplay account)
-        , Element.el [ Element.centerX ]
+        [ Element.el [ Element.centerX ]
             (Aparat.View.gameScene innerGame)
         , Element.el [ Element.centerX ]
             (ControlPanel.View.betControl { orderBet = BetOrdered } ())
@@ -229,13 +228,17 @@ view model =
 
         CurrentSession state ->
             Element.layout [] <|
-                Element.row
-                    [ Element.width Element.fill
-                    , Element.centerX
+                Element.column
+                    [ Element.centerX
                     , Element.centerY
-                    , Element.spaceEvenly
-                    , Element.spacing 48
                     ]
-                    [ displayBenzinoScene state
-                    , displaySuperGame state
+                    [ Element.el [ Element.alignRight ] (Accounting.View.balanceDisplay state.account)
+                    , Element.row
+                        [ Element.width Element.fill
+                        , Element.spaceEvenly
+                        , Element.spacing 48
+                        ]
+                        [ displayBenzinoScene state
+                        , displaySuperGame state
+                        ]
                     ]
