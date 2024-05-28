@@ -1,4 +1,4 @@
-module Accounting.Account exposing (..)
+module ControlPanel.Account exposing (..)
 
 import Common.Money exposing (Money)
 

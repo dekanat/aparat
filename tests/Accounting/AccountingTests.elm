@@ -1,8 +1,8 @@
 module Accounting.AccountingTests exposing (..)
 
-import Accounting.Account exposing (Account(..))
 import Accounting.Accounting exposing (Request(..), updateWith)
 import Common.Money exposing (Money)
+import ControlPanel.Account exposing (Account(..))
 import Expect
 import Test exposing (..)
 
