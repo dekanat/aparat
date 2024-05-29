@@ -1,4 +1,4 @@
-module ControlPanel.Account exposing (..)
+module Control.Account exposing (..)
 
 import Common.Money exposing (Money)
 
@@ -23,3 +23,8 @@ deduct amount (Account balance) =
 
     else
         Err InsufficientBalance
+
+
+balanceOf : Account -> Money
+balanceOf (Account balance) =
+    balance

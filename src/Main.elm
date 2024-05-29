@@ -8,7 +8,7 @@ import Aparat.View
 import Browser
 import Cmd.Extra exposing (..)
 import Common.Money exposing (Money)
-import ControlPanel.View
+import Control.View
 import Dublich.Dublich as Dublich
 import Dublich.View
 import Element
@@ -185,7 +185,7 @@ displayBenzinoScene { account, innerGame } =
         [ Element.el [ Element.centerX ]
             (Aparat.View.gameScene innerGame)
         , Element.el [ Element.centerX ]
-            (ControlPanel.View.betControl { orderBet = BetOrdered } ())
+            (Control.View.betControl { orderBet = BetOrdered } ())
         ]
 
 

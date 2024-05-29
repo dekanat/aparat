@@ -2,7 +2,7 @@ module Accounting.Accounting exposing (..)
 
 import Aggregate
 import Common.Money exposing (Money)
-import ControlPanel.Account as Account exposing (Account(..))
+import Control.Account as Account exposing (Account(..))
 
 
 type Request
