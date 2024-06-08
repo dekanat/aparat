@@ -11,10 +11,9 @@ import Common.Money exposing (Money)
 import ControlPanel.View
 import Element
 import Element.Border
-import Html exposing (Html, time)
+import Html exposing (Html)
 import Random
 import Task
-import Time
 
 
 
