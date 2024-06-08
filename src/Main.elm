@@ -102,6 +102,9 @@ evolveSessionState msg state =
                 { get = .control
                 , set = \new givenState -> { givenState | control = new }
                 }
+
+        updateControl =
+            Control.updateWith { placeBet = BetPlaced }
     in
     case msg of
         BetOrdered amountToBet ->
@@ -132,8 +135,12 @@ evolveSessionState msg state =
                             { fulfillOrder = \_ -> Noop
                             , rejectOrder = Noop
                             }
+
+                collect2 =
+                    Control.ReplenishAccount totalPayout
+                        |> updateControl
             in
-            state |> cycleOverAccounting collectPayout
+            state |> cycleOverControl collect2
 
         SuperGameEvolved innerMessage ->
             state

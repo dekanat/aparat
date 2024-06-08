@@ -1,5 +1,6 @@
 module Control.Control exposing (..)
 
+import Accounting.Accounting exposing (Request(..))
 import Aggregate
 import Common.Money exposing (Money)
 import Control.Account as Account exposing (Account(..))
@@ -23,6 +24,7 @@ init balance betOptions =
 
 type Request
     = Bet Money
+    | ReplenishAccount Money
 
 
 type alias CallbackInterface msg =
@@ -42,6 +44,13 @@ updateWith { placeBet } request state =
 
                 Err _ ->
                     ( state, Nothing )
+
+        ReplenishAccount amount ->
+            let
+                newAccount =
+                    state.account |> Account.add amount
+            in
+            ( { state | account = newAccount }, Nothing )
 
 
 
