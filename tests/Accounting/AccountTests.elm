@@ -1,6 +1,6 @@
 module Accounting.AccountTests exposing (..)
 
-import Accounting.Account as Account exposing (Account(..))
+import Control.Account as Account exposing (Account(..))
 import Expect
 import Test exposing (..)
 
