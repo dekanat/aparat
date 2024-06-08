@@ -8,6 +8,7 @@ import Aparat.View
 import Browser
 import Cmd.Extra exposing (..)
 import Common.Money exposing (Money)
+import Control.Control as Control
 import Control.View
 import Dublich.Dublich as Dublich
 import Dublich.View
@@ -45,6 +46,7 @@ type Msg
     | PayoutReceived Money
     | Randomize (Random.Seed -> Msg)
     | SuperGameEvolved Dublich.Request
+    | ControlEvolved Control.Request
     | Noop
 
 
@@ -60,6 +62,7 @@ type alias SessionState =
     { account : Accounting.State
     , innerGame : Aparat.State
     , superGame : Dublich.State
+    , control : Control.State
     }
 
 
@@ -92,6 +95,12 @@ evolveSessionState msg state =
             Aggregate.performCycleOver
                 { get = .superGame
                 , set = \new givenState -> { givenState | superGame = new }
+                }
+
+        cycleOverControl =
+            Aggregate.performCycleOver
+                { get = .control
+                , set = \new givenState -> { givenState | control = new }
                 }
     in
     case msg of
@@ -139,6 +148,14 @@ evolveSessionState msg state =
                             }
                     )
 
+        ControlEvolved innerMessage ->
+            let
+                practiceControl =
+                    innerMessage
+                        |> Control.updateWith { placeBet = BetPlaced }
+            in
+            state |> cycleOverControl practiceControl
+
         _ ->
             ( state, Nothing )
 
@@ -156,6 +173,7 @@ arrangeSession startedBalance masterSeed =
     { account = Accounting.init startedBalance
     , innerGame = Aparat.init masterSeed
     , superGame = Dublich.init 1000
+    , control = Control.init startedBalance [ 100, 200, 500, 1000 ]
     }
 
 
