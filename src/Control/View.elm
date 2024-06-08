@@ -34,15 +34,16 @@ type alias Translate msg =
 view : Translate msg -> Control.State -> Element.Element msg
 view translate { account, selectedBet } =
     Element.row
-        []
+        [ Element.spaceEvenly, Element.width (Element.px 520) ]
         [ Element.text ("Account Balance: " ++ toString (account |> Account.balanceOf))
         , Element.Input.button
             [ Element.centerX
             , Element.Border.width 2
             , Element.Border.rounded 2
             , Element.padding 8
+            , Element.alignRight
             ]
-            { label = Element.text "Roll for 1000"
+            { label = Element.text ("Roll for " ++ toString selectedBet)
             , onPress = selectedBet |> Maybe.map (translate << Control.Bet)
             }
         ]

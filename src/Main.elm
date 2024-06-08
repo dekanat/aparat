@@ -243,4 +243,6 @@ view state =
                 [ displayBenzinoScene state
                 , displaySuperGame state
                 ]
+            , Element.el [ Element.width (Element.px 520) ]
+                (Control.View.view ControlEvolved state.control)
             ]
