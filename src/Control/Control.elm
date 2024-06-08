@@ -1,6 +1,5 @@
 module Control.Control exposing (..)
 
-import Accounting.Accounting exposing (Request(..))
 import Aggregate
 import Common.Money exposing (Money)
 import Control.Account as Account exposing (Account(..))

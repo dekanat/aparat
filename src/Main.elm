@@ -1,7 +1,5 @@
 module Main exposing (..)
 
-import Accounting.Accounting as Accounting
-import Accounting.View
 import Aggregate
 import Aparat.Aparat as Aparat
 import Aparat.View
@@ -39,8 +37,7 @@ main =
 
 
 type Msg
-    = BetOrdered Money
-    | BetPlaced Money
+    = BetPlaced Money
     | RoundCompleted Money
     | PayoutReceived Money
     | Randomize (Random.Seed -> Msg)
@@ -58,8 +55,7 @@ type alias Model =
 
 
 type alias SessionState =
-    { account : Accounting.State
-    , innerGame : Aparat.State
+    { innerGame : Aparat.State
     , superGame : Dublich.State
     , control : Control.State
     }
@@ -78,12 +74,6 @@ runOptional m =
 evolveSessionState : Msg -> SessionState -> ( SessionState, Maybe Msg )
 evolveSessionState msg state =
     let
-        cycleOverAccounting =
-            Aggregate.performCycleOver
-                { get = .account
-                , set = \new givenState -> { givenState | account = new }
-                }
-
         cycleOverAparat =
             Aggregate.performCycleOver
                 { get = .innerGame
@@ -106,17 +96,6 @@ evolveSessionState msg state =
             Control.updateWith { betPlaced = BetPlaced }
     in
     case msg of
-        BetOrdered amountToBet ->
-            let
-                withdrawBet =
-                    Accounting.Withdraw amountToBet
-                        |> Accounting.updateWith
-                            { fulfillOrder = BetPlaced
-                            , rejectOrder = Noop
-                            }
-            in
-            state |> cycleOverAccounting withdrawBet
-
         BetPlaced bet ->
             let
                 evaluateRound =
@@ -165,8 +144,7 @@ init { currentTime } =
 
 arrangeSession : Money -> Random.Seed -> SessionState
 arrangeSession startedBalance masterSeed =
-    { account = Accounting.init startedBalance
-    , innerGame = Aparat.init masterSeed
+    { innerGame = Aparat.init masterSeed
     , superGame = Dublich.init 1000
     , control = Control.init startedBalance [ 100, 200, 500, 1000 ]
     }
@@ -186,7 +164,7 @@ update msg state =
                 |> Tuple.mapBoth identity runOptional
 
 
-displayBenzinoScene { account, innerGame } =
+displayBenzinoScene { innerGame } =
     Element.column
         [ Element.width (Element.px 520)
         , Element.centerX
@@ -198,7 +176,7 @@ displayBenzinoScene { account, innerGame } =
         [ Element.el [ Element.centerX ]
             (Aparat.View.gameScene innerGame)
         , Element.el [ Element.centerX ]
-            (Control.View.betControl { orderBet = BetOrdered } ())
+            Element.none
         ]
 
 
@@ -229,7 +207,7 @@ view state =
                 [ Element.centerX
                 , Element.padding 48
                 ]
-                (Accounting.View.balanceDisplay state.account)
+                Element.none
             , Element.row
                 [ Element.width Element.fill
                 , Element.spaceEvenly
