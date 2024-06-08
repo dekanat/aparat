@@ -108,11 +108,22 @@ type Card
 
 regularCards : List Card
 regularCards =
-    suits
+    cartesian2 RegularCard suits ranks
+
+
+{-| Build Cartesian product with given mapping function with 2 arguments with corresponding types
+
+    cartesian2 Tuple.pair [ 'a', 'b' ] [ 1, 2 ] --> [('a', 1), ('a', 2), ('b', 1), ('b', 2)]
+
+-}
+cartesian2 : (a -> b -> c) -> List a -> List b -> List c
+cartesian2 mapper listA listB =
+    listA
         |> List.Extra.andThen
-            (\suit ->
-                ranks
-                    |> List.Extra.andThen (\rank -> [ RegularCard suit rank ])
+            (\a ->
+                listB
+                    |> List.Extra.andThen
+                        (\b -> [ mapper a b ])
             )
 
 
