@@ -44,6 +44,6 @@ view translate { account, selectedBet } =
             , Element.alignRight
             ]
             { label = Element.text ("Roll for " ++ toString selectedBet)
-            , onPress = selectedBet |> Maybe.map (translate << Control.Bet)
+            , onPress = selectedBet |> Maybe.map (translate << Control.OrderBet)
             }
         ]

@@ -1,6 +1,6 @@
 module Control.ControlTests exposing (..)
 
-import Control.Account as Account exposing (Account, balanceOf)
+import Control.Account as Account
 import Control.Control as Control exposing (..)
 import Expect
 import Test exposing (Test, describe, test)
@@ -35,7 +35,7 @@ bettingScenarios =
             Control.init initialBalance [ possibleBet, impossibleBet ]
 
         callbacks =
-            { placeBet = \amount -> { betPlaced = amount }
+            { betPlaced = \amount -> { betPlaced = amount }
             }
 
         update =
@@ -44,7 +44,7 @@ bettingScenarios =
         testBettingSuccessfully =
             let
                 ( evolvedState, messaging ) =
-                    initialState |> update (Bet possibleBet)
+                    initialState |> update (OrderBet possibleBet)
             in
             describe "Betting 500 when balance on account is 3000"
                 [ test "should deduct betting amount from the account" <|
@@ -55,13 +55,13 @@ bettingScenarios =
                 , test "should notify on fulfilled order of 500" <|
                     \() ->
                         messaging
-                            |> Expect.equal (Just (callbacks.placeBet possibleBet))
+                            |> Expect.equal (Just (callbacks.betPlaced possibleBet))
                 ]
 
         testBettingWhenInsufficientBalance =
             let
                 ( evolvedState, messaging ) =
-                    initialState |> update (Bet impossibleBet)
+                    initialState |> update (OrderBet impossibleBet)
             in
             describe "Betting 5000 when balance on account is 3000"
                 [ test "should keep account balance as is" <|

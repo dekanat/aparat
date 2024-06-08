@@ -4,7 +4,6 @@ import Accounting.Accounting exposing (Request(..))
 import Aggregate
 import Common.Money exposing (Money)
 import Control.Account as Account exposing (Account(..))
-import List.Extra
 
 
 type alias State =
@@ -23,23 +22,23 @@ init balance betOptions =
 
 
 type Request
-    = Bet Money
+    = OrderBet Money
     | ReplenishAccount Money
 
 
 type alias CallbackInterface msg =
-    { placeBet : Money -> msg
+    { betPlaced : Money -> msg
     }
 
 
 updateWith : CallbackInterface msg -> Aggregate.Update State Request msg
-updateWith { placeBet } request state =
+updateWith { betPlaced } request state =
     case request of
-        Bet amount ->
+        OrderBet amount ->
             case state.account |> Account.deduct amount of
                 Ok reducedAccount ->
                     ( { state | account = reducedAccount }
-                    , Just (placeBet amount)
+                    , Just (betPlaced amount)
                     )
 
                 Err _ ->
@@ -51,32 +50,3 @@ updateWith { placeBet } request state =
                     state.account |> Account.add amount
             in
             ( { state | account = newAccount }, Nothing )
-
-
-
--- init : Money -> State
--- init amount =
---     Account amount
--- type alias Callback msg =
---     { fulfillOrder : Money -> msg
---     , rejectOrder : msg
---     }
--- updateWith : Callback msg -> Aggregate.Update State Request msg
--- updateWith { fulfillOrder, rejectOrder } request model =
---     case request of
---         Withdraw money ->
---             let
---                 deduction =
---                     Account.deduct money model
---             in
---             case deduction of
---                 Ok account ->
---                     ( account, Just (fulfillOrder money) )
---                 Err _ ->
---                     ( model, Just rejectOrder )
---         Replenish money ->
---             let
---                 newModel =
---                     Account.add money model
---             in
---             ( newModel, Nothing )

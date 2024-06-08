@@ -14,10 +14,9 @@ import Dublich.Dublich as Dublich
 import Dublich.View
 import Element
 import Element.Border
-import Html exposing (Html, time)
+import Html exposing (Html)
 import Random
 import Task
-import Time
 
 
 
@@ -104,7 +103,7 @@ evolveSessionState msg state =
                 }
 
         updateControl =
-            Control.updateWith { placeBet = BetPlaced }
+            Control.updateWith { betPlaced = BetPlaced }
     in
     case msg of
         BetOrdered amountToBet ->
@@ -130,17 +129,10 @@ evolveSessionState msg state =
         PayoutReceived totalPayout ->
             let
                 collectPayout =
-                    Accounting.Replenish totalPayout
-                        |> Accounting.updateWith
-                            { fulfillOrder = \_ -> Noop
-                            , rejectOrder = Noop
-                            }
-
-                collect2 =
                     Control.ReplenishAccount totalPayout
                         |> updateControl
             in
-            state |> cycleOverControl collect2
+            state |> cycleOverControl collectPayout
 
         SuperGameEvolved innerMessage ->
             state
@@ -156,12 +148,8 @@ evolveSessionState msg state =
                     )
 
         ControlEvolved innerMessage ->
-            let
-                practiceControl =
-                    innerMessage
-                        |> Control.updateWith { placeBet = BetPlaced }
-            in
-            state |> cycleOverControl practiceControl
+            state
+                |> cycleOverControl (updateControl innerMessage)
 
         _ ->
             ( state, Nothing )
