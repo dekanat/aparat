@@ -1,7 +1,7 @@
 export default function Seknd () {
   return (
     <>
-      <div> Seknd </div>
+      <div style="font-size: 50"> Seknd </div>
     </>
   )
 } 
