@@ -7,14 +7,18 @@ import { useDrag } from '@use-gesture/react'
 
 import styles from './style.module.css'
 
-const cards = [
+const allCards = [
   'https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg',
   'https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg',
   'https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg',
   'https://upload.wikimedia.org/wikipedia/commons/3/3a/TheLovers.jpg',
   'https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/RWS_Tarot_02_High_Priestess.jpg/690px-RWS_Tarot_02_High_Priestess.jpg',
-  'https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg',
 ]
+
+const randomFrom = (xs: unknown[]) => {
+  const index = Math.floor(Math.random() * xs.length)
+  return xs[index]
+}
 
 // These two are just helpers, they curate spring data, values that are later being interpolated into css
 const to = (i: number) => ({
@@ -30,7 +34,13 @@ const trans = (skew: number, scale: number) =>
   `perspective(1500px) rotateX(${skew}deg) scale(${scale})`
 
 function Deck() {
-  const [gone] = useState(() => new Set()) // The set flags all the cards that are flicked out
+  const [goners, setGoners] = useState(() => new Set()) // The set flags all the cards that are flicked out
+  const [cards, setCards] = useState(() => [
+    randomFrom(allCards),
+    // randomFrom(allCards),
+    // randomFrom(allCards),
+  ])
+
   const [props, api] = useSprings(cards.length, i => ({
     ...to(i),
     from: from(i),
@@ -44,7 +54,9 @@ function Deck() {
       const concludedGesture = vx > 0.2 ? "swipe" : "nothing"
 
       if (concludedGesture === 'swipe') {
-        gone.add(index)
+        goners.add(index)
+        // cards.unshift(randomFrom(allCards))
+        // console.log(goners, cards)
       }
     }
 
@@ -56,7 +68,7 @@ function Deck() {
 
     const animateCurrentSpring = (i: number) => {
       if (isCurrentSpring(i)) {
-        const isGone = gone.has(index)
+        const isGone = goners.has(index)
         const x = isGone ? (200 + window.innerWidth) * xDir : isActive ? mx : 0 // When a card is gone it flys out left or right, otherwise goes back to zero
         const scale = isActive ? 1.1 : 1 // Active cards lift up a bit
         const skew = isActive ? 30 : 10
@@ -77,7 +89,20 @@ function Deck() {
     }
 
     api.start(animateCurrentSpring)
+
+    if (!isActive && goners.size === cards.length) {
+      setTimeout(() => {
+        setCards([
+          randomFrom(allCards),
+        ])
+        setGoners(new Set())
+        api.start(i => to(i))
+      }, 600)
+    }
   })
+
+  const getCard = (i: number) => `url(${cards[i]})`
+
   // Now we're just mapping the animated values to our view, that's it. Btw, this component only renders once. :-)
   return (
     <>
@@ -88,7 +113,7 @@ function Deck() {
             {...bind(i)}
             style={{
               transform: interpolate([skew, scale], trans),
-              backgroundImage: `url(${cards[i]})`,
+              backgroundImage: interpolate([i], getCard),
             }}
           />
         </animated.div>
