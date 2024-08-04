@@ -38,27 +38,47 @@ function Deck() {
   // Create a gesture, we're interested in down-state, delta (current-pos - click-pos), direction and velocity
   const bind = useDrag(({ args: [index], active, movement: [mx], direction: [xDir], velocity: [vx] }) => {
     const trigger = vx > 0.2 // If you flick hard enough it should trigger the card to fly out
+    const quickSwipesHorizontally = vx > 0.2
+  
+    // flag the card ready to fly out
     if (!active && trigger) gone.add(index) // If button/finger's up and trigger velocity is reached, we flag the card ready to fly out
-    api.start(i => {
-      if (index !== i) return // We're only interested in changing spring-data for the current spring
-      const isGone = gone.has(index)
-      const x = isGone ? (200 + window.innerWidth) * xDir : active ? mx : 0 // When a card is gone it flys out left or right, otherwise goes back to zero
+  
+    const swipeTheTopCard = (isGone: Boolean) => {
+      const cardsLandingPosition = 
+        isGone ? (200 + window.innerWidth) * xDir : active ? mx : 0 // When a card is gone it flys out left or right, otherwise goes back to zero
       const rot = mx / 100 + (isGone ? xDir * 10 * vx : 0) // How much the card tilts, flicking it harder makes it rotate faster
       const scale = active ? 1.1 : 1 // Active cards lift up a bit
+      const tenshn = active ? 800 : isGone ? 200 : 500
+
       return {
-        x,
+        cardsLandingPosition,
         rot,
         scale,
         delay: undefined,
-        config: { friction: 50, tension: active ? 800 : isGone ? 200 : 500 },
+        config: { friction: 50, tension: tenshn},
       }
-    })
-    if (!active && gone.size === cards.length)
+    }
+
+    const populateStack = () => {
       setTimeout(() => {
         gone.clear()
         api.start(i => to(i))
       }, 600)
+    }
+
+    api.start(i => {
+      if (index !== i) return // We're only interested in changing spring-data for the current spring
+      
+      // remove the interacted? card
+      const isGone = gone.has(index)
+      return swipeTheTopCard(isGone)
+    })
+
+    // repopulate stack
+    if (!active && gone.size === cards.length)
+      populateStack()
   })
+  
   // Now we're just mapping the animated values to our view, that's it. Btw, this component only renders once. :-)
   return (
     <>
