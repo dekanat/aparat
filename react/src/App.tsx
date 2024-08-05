@@ -2,14 +2,14 @@ import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
-import Aparatni from "./Aparatni/Aparatni";
+import Dragich from "./Aparatni/Dragich";
 
 function App() {
   const [count, setCount] = useState(0);
 
   return (
     <>
-        <Aparatni/>
+        <Dragich />
 
       {/* <div>
         <a href="https://vitejs.dev" target="_blank">
