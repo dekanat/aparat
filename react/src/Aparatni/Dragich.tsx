@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { useSprings, animated, to as interpolate } from '@react-spring/web'
-import { useDrag } from '@use-gesture/react'
 
 import styles from './style.module.css'
 
@@ -12,9 +10,28 @@ const allCards = [
   'https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/RWS_Tarot_02_High_Priestess.jpg/690px-RWS_Tarot_02_High_Priestess.jpg',
 ]
 
-const randomFrom = (xs: unknown[]) => {
-  const index = Math.floor(Math.random() * xs.length)
-  return xs[index]
+type CardProps = {
+  url: string
+}
+
+function Card({ url }: CardProps) {
+  return (
+    <>
+      <div className={styles.tarotCard}>
+        <img src={url} />
+      </div>
+    </>
+  )
+}
+
+const positionOf = (i:number) => {
+  const dx = 10
+  const dy = 10
+
+  return {
+    top: i * dx,
+    left: i * dy
+  }
 }
 
 function Dragich() {
@@ -22,11 +39,11 @@ function Dragich() {
   return (
     <>
       {allCards.map((url, i) => (
-        <animated.div className={styles.deck} key={i}>
-          <animated.div >
-            <img src={url} />
-          </animated.div>
-        </animated.div>
+        <div className={styles.deck} key={i}>
+          <div style={{position: 'absolute', ...positionOf(i) }}>
+            <Card url={url} />
+          </div>
+        </div>
       ))}
     </>
   )
