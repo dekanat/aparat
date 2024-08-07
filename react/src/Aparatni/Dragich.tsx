@@ -59,15 +59,6 @@ function Dragich() {
 
   const [givenCards, setGivenCards] = useState(() => initialTarotCards);
 
-  const moveActiveCard = (activeUrl: string, newPosition: Position) => {
-    const activeIndex = givenCards.findIndex(({ url }) => url === activeUrl);
-    givenCards[activeIndex] = {
-      ...givenCards[activeIndex],
-      position: newPosition,
-    };
-    setGivenCards(givenCards);
-  };
-
   const moveTopCard = (
     cards: TarotCard[],
     movedCards: TarotCard[],
@@ -81,15 +72,8 @@ function Dragich() {
     }
   };
 
-  const moveTop = (cards: TarotCard[], newPosition: Position): TarotCard[] => {
-    return cards.splice(0);
-  };
-
   const cardDrags = useDrag((state) => {
     const atRestWhen = ([vx, vy]: Vector2) => vx === 0 && vy === 0;
-
-    const activeCardUrl =
-      "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg";
 
     if (state.active && state.first) {
       console.log("Drag started");
@@ -110,12 +94,6 @@ function Dragich() {
 
         const [left, top] = state.xy;
 
-        // const [head, ...tail] = givenCards.reverse();
-        // const movedHead = {
-        //   ...head,
-        //   position: { left, top },
-        // };
-
         const movedCards = moveTopCard(givenCards, [], { left, top });
 
         setGivenCards(movedCards);
@@ -129,17 +107,8 @@ function Dragich() {
         positionOf(givenCards.length - 1)
       );
 
-      // const [head, ...tail] = givenCards.reverse();
-      // const movedHead = {
-      //   ...head,
-      //   position: positionOf(givenCards.length - 1),
-      // };
-
       setGivenCards(movedCards);
-      // moveActiveCard(activeCardUrl, positionOf(givenCards.length - 1));
     }
-
-    console.log(state);
   }, options);
 
   return (
