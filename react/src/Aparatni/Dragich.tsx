@@ -37,10 +37,12 @@ const positionOf = (i: number) => {
 
 type TarotCard = {
   url: string;
-  position: {
-    top: number;
-    left: number;
-  };
+  position: Position;
+};
+
+type Position = {
+  top: number;
+  left: number;
 };
 
 function Dragich() {
@@ -57,11 +59,28 @@ function Dragich() {
 
   const [givenCards, setGivenCards] = useState(() => initialTarotCards);
 
+  const moveActiveCard = (activeUrl: string, newPosition: Position) => {
+    const activeIndex = givenCards.findIndex(({ url }) => url === activeUrl);
+    givenCards[activeIndex] = {
+      ...givenCards[activeIndex],
+      position: newPosition,
+    };
+    setGivenCards(givenCards);
+  };
+
   const cardDrags = useDrag((state) => {
     const atRestWhen = ([vx, vy]: Vector2) => vx === 0 && vy === 0;
 
+    const activeCardUrl =
+      "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg";
+
     if (state.active && state.first) {
       console.log("Drag started");
+      console.log(state.target);
+      console.log(
+        `current position: ${state.xy} | of element`,
+        state.currentTarget
+      );
     } else if (state.active) {
       if (atRestWhen(state.velocity)) {
         console.log("Dragging paused");
@@ -72,26 +91,49 @@ function Dragich() {
           state.currentTarget
         );
 
-        const [top, left] = state.xy;
-
+        const [left, top] = state.xy;
         const [head, ...tail] = givenCards.reverse();
-        const movedHead = { ...head, position: { left, top } };
+        const movedHead = {
+          ...head,
+          position: { left, top },
+        };
 
         setGivenCards([movedHead, ...tail].reverse());
       }
     } else {
       console.log("Drag ended");
+
+      const [head, ...tail] = givenCards.reverse();
+      const movedHead = {
+        ...head,
+        position: positionOf(givenCards.length - 1),
+      };
+
+      setGivenCards([movedHead, ...tail].reverse());
+      // moveActiveCard(activeCardUrl, positionOf(givenCards.length - 1));
     }
 
     console.log(state);
   }, options);
 
+  const useCardDrags = (givenCard: TarotCard) => {
+    const revealAttributes = useDrag(() => {
+      console.log(givenCard);
+    });
+
+    return revealAttributes();
+  };
+
   return (
     <>
       {givenCards.map(({ url, position }, i) => (
         <div className={styles.deck} key={i}>
-          <div {...cardDrags()} style={{ position: "absolute", ...position }}>
-            <Card url={url} />
+          <div
+            {...cardDrags()}
+            // {...useCardDrags({ url, position })}
+            style={{ position: "absolute", ...position }}
+          >
+            <Card url={url} />x
           </div>
         </div>
       ))}
