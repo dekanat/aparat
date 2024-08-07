@@ -7,7 +7,7 @@ const allCards = [
   "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg",
   "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg",
   "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg",
-  // "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/RWS_Tarot_06_Lovers.jpg/640px-RWS_Tarot_06_Lovers.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/RWS_Tarot_06_Lovers.jpg/640px-RWS_Tarot_06_Lovers.jpg",
   // "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/RWS_Tarot_02_High_Priestess.jpg/690px-RWS_Tarot_02_High_Priestess.jpg",
 ];
 
@@ -68,6 +68,23 @@ function Dragich() {
     setGivenCards(givenCards);
   };
 
+  const moveTopCard = (
+    cards: TarotCard[],
+    movedCards: TarotCard[],
+    newPosition: Position
+  ): TarotCard[] => {
+    if (cards.length === 1) {
+      return [...movedCards, { ...cards[0], position: newPosition }];
+    } else {
+      const [head, ...tail] = cards;
+      return moveTopCard(tail, [...movedCards, head], newPosition);
+    }
+  };
+
+  const moveTop = (cards: TarotCard[], newPosition: Position): TarotCard[] => {
+    return cards.splice(0);
+  };
+
   const cardDrags = useDrag((state) => {
     const atRestWhen = ([vx, vy]: Vector2) => vx === 0 && vy === 0;
 
@@ -92,37 +109,38 @@ function Dragich() {
         );
 
         const [left, top] = state.xy;
-        const [head, ...tail] = givenCards.reverse();
-        const movedHead = {
-          ...head,
-          position: { left, top },
-        };
 
-        setGivenCards([movedHead, ...tail].reverse());
+        // const [head, ...tail] = givenCards.reverse();
+        // const movedHead = {
+        //   ...head,
+        //   position: { left, top },
+        // };
+
+        const movedCards = moveTopCard(givenCards, [], { left, top });
+
+        setGivenCards(movedCards);
       }
     } else {
       console.log("Drag ended");
 
-      const [head, ...tail] = givenCards.reverse();
-      const movedHead = {
-        ...head,
-        position: positionOf(givenCards.length - 1),
-      };
+      const movedCards = moveTopCard(
+        givenCards,
+        [],
+        positionOf(givenCards.length - 1)
+      );
 
-      setGivenCards([movedHead, ...tail].reverse());
+      // const [head, ...tail] = givenCards.reverse();
+      // const movedHead = {
+      //   ...head,
+      //   position: positionOf(givenCards.length - 1),
+      // };
+
+      setGivenCards(movedCards);
       // moveActiveCard(activeCardUrl, positionOf(givenCards.length - 1));
     }
 
     console.log(state);
   }, options);
-
-  const useCardDrags = (givenCard: TarotCard) => {
-    const revealAttributes = useDrag(() => {
-      console.log(givenCard);
-    });
-
-    return revealAttributes();
-  };
 
   return (
     <>
