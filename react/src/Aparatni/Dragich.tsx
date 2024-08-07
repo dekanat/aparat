@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import styles from "./style.module.css";
 import { Vector2, useDrag } from "@use-gesture/react";
+import { animated, useSpringValue } from "@react-spring/web";
 
 const allCards = [
   "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg",
@@ -13,6 +14,7 @@ const allCards = [
 
 type CardProps = {
   url: string;
+  position: Position;
 };
 
 function Card({ url }: CardProps) {
@@ -50,6 +52,8 @@ function Dragich() {
     axis: "y" as const,
   };
 
+  const left = useSpringValue(0);
+
   const initialTarotCards = allCards.map((url, i) => {
     return {
       url,
@@ -72,6 +76,12 @@ function Dragich() {
     }
   };
 
+  const onDragMoves = (position: Position) => {
+    const movedCards = moveTopCard(givenCards, [], position);
+
+    setGivenCards(movedCards);
+  };
+
   const cardDrags = useDrag((state) => {
     const atRestWhen = ([vx, vy]: Vector2) => vx === 0 && vy === 0;
 
@@ -92,11 +102,9 @@ function Dragich() {
           state.currentTarget
         );
 
-        const [left, top] = state.xy;
-
-        const movedCards = moveTopCard(givenCards, [], { left, top });
-
-        setGivenCards(movedCards);
+        const [x, y] = state.xy;
+        onDragMoves({ left: x, top: y });
+        left.start(x);
       }
     } else {
       console.log("Drag ended");
@@ -108,6 +116,7 @@ function Dragich() {
       );
 
       setGivenCards(movedCards);
+      left.start(0);
     }
   }, options);
 
@@ -115,13 +124,12 @@ function Dragich() {
     <>
       {givenCards.map(({ url, position }, i) => (
         <div className={styles.deck} key={i}>
-          <div
+          <animated.div
             {...cardDrags()}
-            // {...useCardDrags({ url, position })}
-            style={{ position: "absolute", ...position }}
+            style={{ position: "absolute", left, top: position.top }}
           >
-            <Card url={url} />x
-          </div>
+            <Card url={url} position={position} />x
+          </animated.div>
         </div>
       ))}
     </>
